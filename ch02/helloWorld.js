@@ -22,6 +22,7 @@ http.createServer(function(req, res){
   var path = req.url.replace(/\/?(?:\?.*)?$/, '').toLowerCase();
   switch (path) {
     case '':
+    //res.writeHead(), res.end(); 是node的方法
       res.writeHead(200, {
         'Content-type': 'text/plain'
       });

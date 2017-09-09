@@ -4,7 +4,7 @@ var fortune = require('./lib/fortune.js');
 var app = express();
 
 // set up handlebars view engine
-var handlebars = require('express3-handlebars')
+var handlebars = require('express-handlebars')
 	.create({ defaultLayout:'main' });
 app.engine('handlebars', handlebars.engine);
 app.set('view engine', 'handlebars');
@@ -34,6 +34,6 @@ app.use(function(err, req, res, next){
 });
 
 app.listen(app.get('port'), function(){
-  console.log( 'Express started on http://localhost:' + 
+  console.log( 'Express started on http://localhost:' +
     app.get('port') + '; press Ctrl-C to terminate.' );
 });

@@ -2,7 +2,7 @@
   "name": "meadowlarktravel",
   "version": "0.0.0",
   "description": "Sample website for Web Development with Node and Express (O'Reilly).",
-  "main": "meadowlark.js",
+  "main": "meadowlark.js",  
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/EthanRBrown/web-development-with-node-and-express",
   "dependencies": {
-    "express": "~4.4.2",
-    "express-handlebars": "~0.5.0"
+    "express": "^4.15.4",
+    "express-handlebars": "^3.0.0"
   }
 }
