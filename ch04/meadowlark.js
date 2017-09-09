@@ -1,4 +1,5 @@
 var express = require('express');
+//
 var fortune = require('./lib/fortune.js');
 
 var app = express();

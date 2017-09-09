@@ -1,3 +1,4 @@
+//将实现饼干的功能模块化；
 var fortuneCookies = [
 	"Conquer your fears or they will conquer you.",
 	"Rivers need springs.",
