@@ -22,6 +22,12 @@ app.set('port', process.env.PORT || 3000);
 app.use(express.static(__dirname + '/public'));
 
 // set 'showTests' context property if the querystring contains test=1
+// (设置测试链接，如果url中包含参数 test=1)
+/*
+res.locals对象是要传给视图的上下文的一部分
+app.get('env')：production ， 生产环境；
+req.query.test: url中拼接的参数；
+*/
 app.use(function(req, res, next) {
   res.locals.showTests = app.get('env') !== 'production' &&
     req.query.test === '1';

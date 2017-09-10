@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Meadowlark Travel</title>
+    <!-- 引入测试模块的代码  -->
 	{{#if showTests}}
 		<link rel="stylesheet" href="/vendor/mocha.css">
 	{{/if}}
@@ -14,6 +15,7 @@
 	<script>window.jQuery || document.write('<script src="/vendor/js/jquery-2.1.1.min.js"><\/script>')</script>
 	{{{_sections.jquery}}}
 
+<!-- 测试模块的代码， 在main模板中引入是针对全局的 测试 -->
 	{{#if showTests}}
 		<div id="mocha"></div>
 		<script src="/vendor/mocha.js"></script>

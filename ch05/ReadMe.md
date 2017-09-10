@@ -15,6 +15,59 @@ b.**集成测试**： 对多个组件甚至整个系统之间的交互测试；�
 
 ##### 四. QA技术概览
 **1. 页面测试**（Mocha进行测试）涉及单元测试及集成测试
+- Mocha 要在浏览器中运行，所以要把Mocha资源放在public目录下， 以便让客户端访问到，将这些资源放在public/vendor中；
+- 测试通常需要一个assert(或 expect)函数。Node框架中有这个函数，但浏览器中没有，所以需要Chai断言库；
+```
+ npm install --save-dev chai
+ cp node_modules/chai/chai.js public/vendor
+```
+- 通过一些中间件来检测URL中的查询字符的test=1, 以确定其是用于测试的，从而与实际的页面分开；
+```JavaScript
+app.use(function(req, res, next) {
+  res.locals.showTests = app.get('env') !== 'production' &&
+    req.query.test === '1';
+  next();
+});
+```
+- 在模板“main”中引入测试框架，修改head部分如下：
+```html
+<head>
+    <title>Meadowlark Travel</title>
+    <!-- 引入测试模块的代码  -->
+	{{#if showTests}}
+		<link rel="stylesheet" href="/vendor/mocha.css">
+	{{/if}}
+</head>
+```
+- 然后再紧挨着的结束标签</body>之前（这是用于全局页面测试部分）：
+```html
+{{#if showTests}}
+  <div id="mocha"></div>
+  <script src="/vendor/mocha.js"></script>
+  <script src="/vendor/chai.js"></script>
+  <script>
+    mocha.ui('tdd');
+    var assert = chai.assert;
+  </script>
+  <script src="/qa/tests-global.js"></script>
+  {{#if pageTestScript}}
+    <script src="{{pageTestScript}}"></script>
+  {{/if}}
+  <script>mocha.run();</script>
+{{/if}}
+</body>
+```
+- 在public/qa中创建测试脚本`global-test.js`
+```JavaScript
+suite('Global Tests', function(){
+	test('page has a valid title', function(){
+		assert(document.title && document.title.match(/\S/) &&
+			document.title.toUpperCase() !== 'TODO');
+	});
+});
+```
+- mocha支持多种“界面”来控制测试的风格。
+> - 默认界面是**行为驱动开发（**BDD**），它让你以行为的方式思考。,在BDD中，你描述组件和它们的行为，然后用测试去验证这些行为。()
 
 **2. 跨页测试** （Zombie.js）主要是集成测试
 
@@ -25,3 +78,28 @@ b.**集成测试**： 对多个组件甚至整个系统之间的交互测试；�
 > 去毛不是找错误，而是要找潜在的错误
 
 **5.连接检查** （linkchecker） 属于单元测试
+
+
+
+
+
+
+##### 安装中遇到的错误：
+```
+E:\study\nodeAndExpress\ch05\node_modules\contextify>if not defined npm_config_node_gyp (node "D:\Program Files\nodejs\node_modules\npm\bin\node-gyp-bin\\..\..\node_modules\node-gyp\bin\node-gyp.js" rebuild )  else (node "" rebuild )
+gyp ERR! configure error
+gyp ERR! stack Error: Can't find Python executable "python", you can set the PYTHON env variable.
+gyp ERR! stack     at failNoPython (D:\Program Files\nodejs\node_modules\npm\node_modules\node-gyp\lib\configure.js:449:14)
+gyp ERR! stack     at D:\Program Files\nodejs\node_modules\npm\node_modules\node-gyp\lib\configure.js:404:11
+gyp ERR! stack     at D:\Program Files\nodejs\node_modules\npm\node_modules\graceful-fs\polyfills.js:264:29
+gyp ERR! stack     at FSReqWrap.oncomplete (fs.js:123:15)
+gyp ERR! System Windows_NT 10.0.10240
+gyp ERR! command "D:\\Program Files\\nodejs\\node.exe" "D:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js" "rebuild"
+gyp ERR! cwd E:\study\nodeAndExpress\ch05\node_modules\contextify
+gyp ERR! node -v v6.11.3
+gyp ERR! node-gyp -v v3.4.0
+gyp ERR! not ok
+```
+#### 解决方案：
+[参考node -gyp](https://github.com/nodejs/node-gyp)
+`npm install --global --production windows-build-tools`
