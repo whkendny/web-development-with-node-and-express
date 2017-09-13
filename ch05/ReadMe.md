@@ -69,20 +69,102 @@ suite('Global Tests', function(){
 - mocha支持多种“界面”来控制测试的风格。
 > - 默认界面是**行为驱动开发（**BDD**），它让你以行为的方式思考。,在BDD中，你描述组件和它们的行为，然后用测试去验证这些行为。()
 
+- 添加针对页面的测试     
+eg: 创建一个 public/qa/tests-about.js 文件    
+
+```JavaScript
+suite('"About" Page Tests', function(){
+  test('page should contain link to contact page', function(){
+    assert($('a[href="/contact"]').length);
+  });
+});
+```
+
 **2. 跨页测试** （Zombie.js）主要是集成测试
+详细见：P40, 5.7 跨页面测试      
+`无头浏览器`： 不需要真的在屏幕上显示什么，但它必须表现得像个浏览器；    
+目前有三个解决方案：1. Selenium;  2.PhantomJS; 3. Zombie
 
 **3. 逻辑测试**
 > 逻辑测试会对逻辑域进行单元和集成测试。只会测试JavaScript，跟所表示的功能分开；
 
+- 添加单元测试      
+> 创建 文件  qa/tests-unit.js
+
+```JavaScript
+var fortune = require('../lib/fortune.js');
+var expect = require('chai').expect;
+
+suite('Fortune cookie tests', function(){
+
+    test('getFortune() should return a fortune', function(){
+        expect(typeof fortune.getFortune() === 'string');
+    });
+
+});
+```
+运行mocha（需要全局安装mocha:`npm install --global mocha`）:          
+```
+mocha -u tdd -R spec qa/tests-unit.js
+```
+[mocha测试](http://blog.csdn.net/chenjh213/article/details/49025673)
+
 **4. 去毛** （JSHint）
-> 去毛不是找错误，而是要找潜在的错误
+> 去毛不是找错误，而是要找潜在的错误;
+
+- 常见的去毛机：
+> - JSLint
+> - JSHint (推荐，可定制)
+
+1. 获取JSHint `npm install -g jshint`       
+2. 运行并检查对应的脚本 `jshint meadowlark.js`    
 
 **5.连接检查** （linkchecker） 属于单元测试
+- 检查死链接对搜索引擎对网站的评级有重要的影响
+- 使用linkchecker可以对网站进行连接检查(网站首页URL)    
+`linkchecker http://localhost:3000`
 
+五. 使用Grunt实现自动化【Glup】
+- 安装Grunt命令行以及Grunt本身：        
+`npm install -g grunt-cli`
+`npm install --save-dev grunt`
+- 在项目目录下创建一个Gruntfile.js文件
+```
+module.exports = function(grunt){
 
+	// load plugins
+	[
+		'grunt-cafe-mocha',
+		'grunt-contrib-jshint',
+		'grunt-exec',
+	].forEach(function(task){
+		grunt.loadNpmTasks(task);
+	});
 
+	// configure plugins
+	grunt.initConfig({
+		cafemocha: {
+			all: { src: 'qa/tests-*.js', options: { ui: 'tdd' }, }
+		},
+		jshint: {
+			app: ['meadowlark.js', 'public/js/**/*.js', 'lib/**/*.js'],
+			qa: ['Gruntfile.js', 'public/qa/**/*.js', 'qa/**/*.js'],
+		},
+		exec: {
+			linkchecker: { cmd: 'linkchecker http://localhost:3000' }
+		},
+	});
 
+	// register tasks
+	grunt.registerTask('default', ['cafemocha','jshint','exec']);
+};
 
+```
+
+##### 六 持续集成（CI）
+- node最流行的CI服务器是Travis CI
+[前端持续集成化](https://segmentfault.com/a/1190000007221668)
+[前端开源项目持续集成三剑客](http://efe.baidu.com/blog/front-end-continuous-integration-tools/)
 
 ##### 安装中遇到的错误：
 ```

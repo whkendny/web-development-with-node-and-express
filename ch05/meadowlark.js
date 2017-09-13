@@ -40,7 +40,7 @@ app.get('/', function(req, res) {
 app.get('/about', function(req, res) {
   res.render('about', {
     fortune: fortune.getFortune(),
-    pageTestScript: '/qa/tests-about.js'
+    pageTestScript: '/qa/tests-about.js'   // 测试脚本
   });
 });
 app.get('/tours/hood-river', function(req, res) {
