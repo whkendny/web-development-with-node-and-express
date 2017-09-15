@@ -81,8 +81,8 @@ app.get('/headers', function(req,res){
 - 请求对象（通常传递到回调方法，这意味着你可以随意命名，通常命名为 req 或 request）的生命**周期始于 Node** 的一个核心对象 `http.IncomingMessage` 的实例。Express 添加了一些附加功能。
 - 我们来看看请求对象中最有用的属性和方法（除了来自 Node 的 req.headers 和req.url，所有这些方法都由 Express 添加）。
 
-| 属性/方法       |  功能                                   |              注释         |
-| -----------    |       ----------------------            | ----------------------------|  
+| 属性/方法       |  功能                 |       注释      |
+| -----------    | -------------------   |   ---------     |  
 | req.params     | 一个数组，包含命名过的路由参数。           |                            |
 | req.param(name)| 返回命名的路由参数，或者 GET 请求或 POST 请求参数。|  建议忽略此方法。  |
 | req.query    |  一个对象，包含以键值对存放的查询字符串参数（通常称为 GET 请求参数）||
@@ -98,4 +98,246 @@ app.get('/headers', function(req,res){
 |req.secure|一个简便属性，如果连接是安全的，将返回 true| req.protocol==='https'|
 |req.url/req.originalUrl | 有点用词不当，这些属性返回了路径和查询字符串（它们不包含协议、主机或端口）。req.url 若是出于内部路由目的，则可以重写，但是 req.orginalUrl 旨在保留原始请和查询字符串 |   |      
 | req.acceptedLanguages | 一个简便方法，用来返回客户端首选的一组（人类的）语言 | 这些信息是从请求报头中解析而来的。 |
-##### [响应对象](http://blog.csdn.net/christine95/article/details/50500171)
+##### 九 [响应对象](http://blog.csdn.net/christine95/article/details/50500171)
+- 响应对象（通常传递到回调方法，这意味着你可以随意命名它，通常命名为 res、resp 或response）的生命周期始于 Node 核心对象 http.ServerResponse 的实例。
+- Express 添加了一些附加功能。我们来看看响应对象中最有用的属性和方法（所有这些方法都是由 Express添加的）。
+
+| 属性/方法       |  功能                 |       注释      |
+| -----------    | -------------------   |   ---------     |  
+| res.status(code)| 设置 HTTP 状态代码。 | Express 默认为 200（成功），所以你可以使用这个方法返回状态404（页面不存在）或 500（服务器内部错误），或任何一个其他的状态码。|
+|res.redirect([status],url) |重定向浏览器。默认重定向代码是 302（建立）。|通常，你应尽量减少重定向，除非永久移动一个页面，这种情况应当使用代码 301（永久移动）。|
+|res.set(name,value)  |设置响应头。| 这通常不需要手动设置。|
+|res.cookie（name,vaue,[options]）|设置客户端 cookies 值。 |需要中间件支持|
+|res.clearCookie(name,[options]) | 清除客户端 cookies 值| 需要中间件支持|
+|res.send(body)、 res.send(status,body)|向客户端发送响应及可选的状态码。|Express 的默认内容类型是 text/html。如果你想改为 text/plain，需要在 res.send 之前调用 res.set('Content-Type','text/plain\')。如果 body 是一个对象或一个数组，响应将会以 JSON 发送（内容类型需要被正确设置），不过既然你想发送 JSON，我推荐你调用 res.json。 |     
+|res.json(json), res.json(status,json)|向客户端发送 JSON 以及可选的状态码| |
+|res.type(type) | 一个简便的方法，用于设置 Content-Type 头信息。基本上相当于 res.set('Content-Type','type')，只是如果你提供了一个没有斜杠的字符串，它会试图把其当作文件的扩展名映射为一个互联网媒体类型。比如，res.type('txt') 会将 Content-Type 设为text/plain。|此功能在有些领域可能会有用（例如自动提供不同的多媒体文件），但是通常应该避免使用它，以便明确设置正确的互联网媒体类型。|
+|res.format(object)|这个方法允许你根据接收请求报头发送不同的内容。|这是它在 API 中的主要用途，这里有一个非常简单的例子：res.format({'text/plain':'hithere','text/html':'<b>hi there</b>'})|  
+|res.attachment([filename]),res.download(path,[filename],[callback]) |这两种方法会将响应报头 Content-Disposition 设为 attachment，这样浏览器就会选择下载而不是展现内容。你可以指定 filename 给浏览器作为对用户的提示。用 res.download 可以指定要下载的文件，而 res.attachment 只是设置报头。| |
+|res.sendFile(path,[option],[callback]) |这个方法可根据路径读取指定文件并将内容发送到客户端。使用该方法很方便。使用静态中间件，并将发送到客户端的文件放在公共目录下，这很容易。然而，如果你想根据条件在相同的 URL 下提供不同的资源，这个方法可以派上用场。 | |  
+|res.links(links)| 设置链接响应报头。|这是一个专用的报头，在大多数应用程序中几乎没有用处。|
+|res.locals,res.render(view,[locals],callback)|res.locals 是一个对象，包含用于渲染视图的默认上下文。|res.render 使用配置的模请求和响应对象 |
+> 板引擎渲染视图（不能把 res.render 的 locals 参数与 res.locals 混为一谈，上下文**在 res.locals 中会被重写，但在没有被重写的情况下仍然可用**）。res.render 的默认响应代码为 200，使用 res.status 可以指定一个不同的代码。
+> - 响应对象的方法基本分三类：
+>> - 响应的内容：
+```JavaScript
+res.send(body),res.send(status,body)
+res.json(json),res.json(status,json)
+res.jsonp(json),req.jsonp(status,json)
+res.sendFile(path,[option],[callback])
+res.locals,res.render(view,[locals],callback)
+```
+>>　- 响应的报头：
+```JavaScript
+res.status(code)
+res.set(name,value)
+res.type(type)
+res.format(object)
+res.attachment([filename]),res.download(path,[filename],[callback])
+res.redirect([status],url)
+```
+> - 响应的数据：
+```JavaScript
+res.cookie（name,vaue,[options]）,res.clearCookie(name,[options])
+```
+
+
+
+##### 十 获取更多信息
+- Express源码的[目录结构](http://cnodejs.org/topic/5746cdcf991011691ef17b88)如下图：   
+![](http://dn-cnode.qbox.me/FnuptVMv5TZchESOT0JRT0re7KZ0)
+
+- /lib/application.js:　Express主接口。（中间节如何接入，视图是如何渲染的）
+- /lib/express.js ： 这是一个相对较短的shell，是/lib/application.js 中Connect的功能扩展，它返回一个函数，可以用http.createServer运行Express;
+- /lib/request.js : 扩展了Node的`http.IncomingMessage`对象，提供了一个稳健的请求对象。关于请求对象属性和方法的所有信息都在这个文件里。
+- /lib/response.js : 扩展了Node的`http.ServerReponse`对象，提供响应对象。关于响应对象的所有属性和方法都在这个文件里。
+- /lib/router/route.js: 提供基础路由支持。尽管路由是应用的核心，但这个文件只有不到200行，你会发现它非常地简单优雅。
+
+#####  十一. 内容渲染
+- 大多数情况下，渲染内容用`res.render`，它最大程度地根据布局渲染视图。如果想写一个快速测试页，也许会用到`res.send`。
+- 你可以使用`req.query`得到查询字符串的值;
+- 使用`req.session`得到会话值;
+- 使用`req.cookie/req.singedCookies`得到cookies值。
+
+- 基本用法
+```JavaScript
+//基本用法
+app.get('/about', function(req, res){
+ res.render('about');
+});
+```
+- 200以外的响应代码
+```JavaScript
+app.get('/error', function(req, res){
+ res.status(500);
+ res.render('error');
+});
+//或是一行...
+app.get('/error', function(req, res){
+ res.status(500).render('error');
+});
+```
+- 将上下文传递给视图，包括查询字符串、cookie和session值
+```JavaScript
+app.get('/greeting', function(req, res){
+res.render('about', {
+    message: 'welcome',
+    style: req.query.style,
+    userid: req.cookie.userid,
+    username: req.session.username,
+});
+});
+```
+- 没有布局的视图渲染
+```JavaScript
+//下面的layout没有布局文件，即views/no-layout.handlebars
+//必须包含必要的HTML
+app.get('/no-layout', function(req, res){
+  res.render('no-layout', { layout: null });
+});
+```
+- 使用定制布局渲染视图
+```JavaScript
+// 使用布局文件views/layouts/custom.handlebars
+app.get('/custom-layout', function(req, res){
+  res.render('custom-layout', { layout: 'custom' });
+});
+```
+- 渲染纯文本输出
+```JavaScript
+app.get('/test', function(req, res){
+  res.type('text/plain');
+  res.send('this is a test');
+});
+```
+- 添加错误处理程序
+```JavaScript
+//这应该出现在所有路由方法的结尾
+//需要注意的是，即使你不需要一个“下一步”方法
+//它也必须包含，以便Express将它识别为一个错误处理程序
+app.use(function(err, req, res, next){
+  console.error(err.stack);
+  res.status(500).render('error');
+});
+```
+
+- 添加一个404处理程序
+```JavaScript
+//这应该出现在所有路由方法的结尾
+app.use(function(req, res){
+res.status(404).render('not-found');
+});
+```
+##### 十二. 处理表单
+- 当处理表单时，表单信息一般在req.body中（或者偶尔在req.query中）。可以使用req.xhr来判断是AJAX请求还是浏览请求;
+
+- 基本表单处理
+```JavaScript
+//必须引入中间件body-parser
+app.post('/process-contact', function(req, res){
+  console.log('Received contact from ' + req.body.name +
+     ' <' + req.body.email + '>');
+  //保存到数据库....
+  res.redirect(303, '/thank-you');
+});
+```
+- 更强大的表单处理
+```JavaScript
+//必须引入中间件body-parser
+app.post('/process-contact', function(req, res){
+console.log('Received contact from ' + req.body.name +
+' <' + req.body.email + '>');
+try {
+  //保存到数据库....
+  return res.xhr ?
+      res.render({ success: true }) :
+      res.redirect(303, '/thank-you');
+} catch(ex) {
+  return res.xhr ?
+      res.json({ error: 'Database error.' }) :
+      res.redirect(303, '/database-error');
+}
+});
+```
+
+##### 十三. 提供一个API
+- 如果提供一个类似于表单处理的API，参数通常会在req.query中，虽然也可以使用req.body。与其他API不同，这种情况下通常会返回JSON、XML或纯文本，而不是HTML。
+- 你会经常使用不太常见的HTTP方法，比如PUT、POST和DELETE。
+
+eg:　“产品”数组（通常是从数据库中检索）：
+```jsonp
+var tours = [
+{ id: 0, name: 'Hood River', price: 99.99 },
+{ id: 1, name: 'Oregon Coast', price: 149.95 },
+];
+```
+
+- 简单的GET节点，只返回JSON数据
+```JavaScript
+app.get('/api/tours'), function(req, res){
+  res.json(tours);
+});
+```
+
+- 根据客户端的首选项，使用Express中的res.format方法对其响应。GET节点，返回JSON、XML或text;
+```
+app.get('/api/tours', function(req, res){
+var toursXml = '<?xml version="1.0"?><tours>' +
+    products.map(function(p){
+       return '<tour price="' + p.price +
+             '" id="' + p.id + '">' + p.name + '</tour>';
+    }).join('') + '</tours>'';
+
+var toursText = tours.map(function(p){
+       return p.id + ': ' + p.name + ' (' + p.price + ')';
+    }).join('\n');
+
+   res.format({
+        'application/json': function(){
+              res.json(tours);
+       },
+        'application/xml': function(){
+              res.type('application/xml');
+              res.send(toursXml);
+       },
+       'text/xml': function(){
+             res.type('text/xml');
+             res.send(toursXml);
+       }
+      'text/plain': function(){
+             res.type('text/plain');
+             res.send(toursXml);
+      }
+ });
+});
+```
+
+- PUT节点**更新一个产品信息然后返回JSON**。参数在查询字符串中传递（路由字符串中的'':id''命令Express在req.params中增加一个id属性）。用于更新的PUT节点
+```JavaScript
+//API用于更新一条数据并且返回JSON；参数在查询字符串中传递
+app.put('/api/tour/:id', function(req, res){
+var p = tours.some(function(p){ return p.id == req.params.id });
+if( p ) {
+         if( req.query.name ) p.name = req.query.name;
+         if( req.query.price ) p.price = req.query.price;
+         res.json({success: true});
+} else {
+         res.json({error: 'No such tour exists.'});
+}
+});
+```
+- 用于删除的DEL节点
+```JavaScript
+// API用于删除一个产品
+api.del('/api/tour/:id', function(req, res){
+var i;
+for( var i=tours.length-1; i>=0; i-- )
+    if( tours[i].id == req.params.id ) break;
+if( i>=0 ) {
+    tours.splice(i, 1);
+    res.json({success: true});
+} else {
+    res.json({error: 'No such tour exists.'});
+}
+});
+```
