@@ -1,3 +1,4 @@
+// 跨页面测试
 var Browser = require('zombie'),
 	assert = require('chai').assert;
 
