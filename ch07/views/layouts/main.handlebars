@@ -10,7 +10,7 @@
 		{{#if showTests}}
 			<link rel="stylesheet" href="/vendor/mocha.css">
 		{{/if}}
-		{{{_sections.head}}}
+		{{{_sections.head}}}  {{! 将section 辅助方法添加的视图添加进来}}
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -41,11 +41,11 @@
 			<footer>
 				<p>&copy; Meadowlark Travel 2014</p>
 			</footer>
-	    </div> <!-- /container -->        
+	    </div> <!-- /container -->
 
         <script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
         <script>window.jQuery || document.write('<script src="/vendor/js/jquery-2.1.1.min.js"><\/script>')</script>
-    	{{{_sections.jquery}}}
+    	{{{_sections.jquery}}} {{! 将section 辅助方法添加的脚本加进来}}
 
 		{{#if showTests}}
 			<div id="mocha"></div>

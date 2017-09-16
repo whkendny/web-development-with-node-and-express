@@ -1,6 +1,8 @@
 {{#section 'head'}}
+	{{! - 客户端 handlebars, 加载Handlebars}}
 	<script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/1.3.0/handlebars.min.js"></script>
 
+{{! handlebars模板  必须转义至少一个大括号，否则，服务器端视图会尝试对其进行替换。}}
 	<script id="nurseryRhymeTemplate" type="text/x-handlebars-template">
 		Marry had a little <b>\{{animal}}</b>, its <b>\{{bodyPart}}</b>
 		was <b>\{{adjective}}</b> as <b>\{{noun}}</b>.
@@ -9,13 +11,15 @@
 
 <div id="nurseryRhyme">Click a button....</div>
 <hr>
-<button id="btnNurseryRhyme">Generate nursery rhyme</button>
-<button id="btnNurseryRhymeAjax">Generate nursery rhyme from AJAX</button>
+<button id="btnNurseryRhyme">Generate nursery rhyme</button>  {{!通过JavaScript渲染}}
+<button id="btnNurseryRhymeAjax">Generate nursery rhyme from AJAX</button> {{! 通过ajax渲染}}
 
+{{! 引用jquery}}
 {{#section 'jquery'}}
 	<script>
 		$(document).ready(function(){
 
+			//使用模板之前进行编辑
 			var nurseryRhymeTemplate = Handlebars.compile(
 				$('#nurseryRhymeTemplate').html());
 
@@ -35,11 +39,12 @@
 				evt.preventDefault();
 				$.ajax('/data/nursery-rhyme', {
 					success: function(data){
+						console.log(data);
 						$nurseryRhyme.html(nurseryRhymeTemplate(data))
 					}
 				});
 			});
 
-		});	
+		});
 	</script>
 {{/section}}

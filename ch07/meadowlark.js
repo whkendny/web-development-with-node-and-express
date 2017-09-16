@@ -5,11 +5,12 @@ var app = express();
 
 // set up handlebars view engine
 var handlebars = require('express-handlebars').create({
-    defaultLayout:'main',
-    helpers: {
+    defaultLayout:'main',  //默认模板
+    helpers: { //实例化handlebars对象,并添加section的辅助方法:
         section: function(name, options){
             if(!this._sections) this._sections = {};
-            this._sections[name] = options.fn(this);
+            this._sections[name] = options.fn(this); // fn 就是中间件函数
+            console.log('options:--',this,  options.fn());
             return null;
         }
     }
@@ -23,12 +24,12 @@ app.use(express.static(__dirname + '/public'));
 
 // set 'showTests' context property if the querystring contains test=1
 app.use(function(req, res, next){
-	res.locals.showTests = app.get('env') !== 'production' && 
+	res.locals.showTests = app.get('env') !== 'production' &&
 		req.query.test === '1';
 	next();
 });
 
-// mocked weather data
+// mocked weather data (模拟天气数据)
 function getWeatherData(){
     return {
         locations: [
@@ -57,20 +58,20 @@ function getWeatherData(){
     };
 }
 
-// middleware to add weather data to context
+// middleware to add weather data to context (创建一个中间件给res.locals.partials对象添加数据)
 app.use(function(req, res, next){
 	if(!res.locals.partials) res.locals.partials = {};
- 	res.locals.partials.weatherContext = getWeatherData();
- 	next();
+ 	res.locals.partials.weatherContext = getWeatherData(); //获取天气数据
+ 	next(); //上面执行完成继续执行下一个组件
 });
 
 app.get('/', function(req, res) {
 	res.render('home');
 });
 app.get('/about', function(req,res){
-	res.render('about', { 
+	res.render('about', {
 		fortune: fortune.getFortune(),
-		pageTestScript: '/qa/tests-about.js' 
+		pageTestScript: '/qa/tests-about.js'
 	} );
 });
 app.get('/tours/hood-river', function(req, res){
@@ -85,9 +86,13 @@ app.get('/tours/request-group-rate', function(req, res){
 app.get('/jquery-test', function(req, res){
 	res.render('jquery-test');
 });
+
+// 针对nursery rhyme页和AJAX调用的路由处理程序：
 app.get('/nursery-rhyme', function(req, res){
 	res.render('nursery-rhyme');
 });
+
+//获取数据的接口
 app.get('/data/nursery-rhyme', function(req, res){
 	res.json({
 		animal: 'squirrel',
@@ -111,6 +116,6 @@ app.use(function(err, req, res, next){
 });
 
 app.listen(app.get('port'), function(){
-  console.log( 'Express started on http://localhost:' + 
+  console.log( 'Express started on http://localhost:' +
     app.get('port') + '; press Ctrl-C to terminate.' );
 });
