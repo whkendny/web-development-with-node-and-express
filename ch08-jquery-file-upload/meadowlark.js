@@ -26,7 +26,7 @@ app.use(require('body-parser')());
 
 // set 'showTests' context property if the querystring contains test=1
 app.use(function(req, res, next){
-	res.locals.showTests = app.get('env') !== 'production' && 
+	res.locals.showTests = app.get('env') !== 'production' &&
 		req.query.test === '1';
 	next();
 });
@@ -68,13 +68,14 @@ app.use(function(req, res, next){
 });
 
 // jQuery File Upload endpoint middleware
+//jquery文件上传的API
 app.use('/upload', function(req, res, next){
     var now = Date.now();
     jqupload.fileHandler({
-        uploadDir: function(){
+        uploadDir: function(){ //上传的目录
             return __dirname + '/public/uploads/' + now;
         },
-        uploadUrl: function(){
+        uploadUrl: function(){  //下载的链接
             return '/uploads/' + now;
         },
     })(req, res, next);
@@ -84,9 +85,9 @@ app.get('/', function(req, res) {
 	res.render('home');
 });
 app.get('/about', function(req,res){
-	res.render('about', { 
+	res.render('about', {
 		fortune: fortune.getFortune(),
-		pageTestScript: '/qa/tests-about.js' 
+		pageTestScript: '/qa/tests-about.js'
 	} );
 });
 app.get('/tours/hood-river', function(req, res){
@@ -159,6 +160,6 @@ app.use(function(err, req, res, next){
 });
 
 app.listen(app.get('port'), function(){
-  console.log( 'Express started on http://localhost:' + 
+  console.log( 'Express started on http://localhost:' +
     app.get('port') + '; press Ctrl-C to terminate.' );
 });

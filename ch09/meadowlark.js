@@ -4,6 +4,8 @@ var express = require('express'),
 
 var app = express();
 
+
+//引入外化凭证
 var credentials = require('./credentials.js');
 
 // set up handlebars view engine
@@ -22,11 +24,12 @@ app.set('view engine', 'handlebars');
 
 app.set('port', process.env.PORT || 3000);
 
+//引入`cookie-parser`,并获取cookie秘钥
 app.use(require('cookie-parser')(credentials.cookieSecret));
 app.use(require('express-session')({
-    resave: false,
-    saveUninitialized: false,
-    secret: credentials.cookieSecret,
+    resave: false,  //每次请求是否重新设置session cookie;
+    saveUninitialized: false, //是指无论有没有session cookie，每次请求都设置个session cookie ，默认给个标示为 connect.sid
+    secret: credentials.cookieSecret, //应用在https
 }));
 app.use(express.static(__dirname + '/public'));
 app.use(require('body-parser')());
@@ -42,7 +45,7 @@ app.use(function(req, res, next){
 
 // set 'showTests' context property if the querystring contains test=1
 app.use(function(req, res, next){
-	res.locals.showTests = app.get('env') !== 'production' && 
+	res.locals.showTests = app.get('env') !== 'production' &&
 		req.query.test === '1';
 	next();
 });
@@ -76,7 +79,7 @@ function getWeatherData(){
     };
 }
 
-// middleware to add weather data to context
+// middleware to add weather data to context(将天气数据的上下文添加到weatherContext)
 app.use(function(req, res, next){
 	if(!res.locals.partials) res.locals.partials = {};
  	res.locals.partials.weatherContext = getWeatherData();
@@ -87,9 +90,9 @@ app.get('/', function(req, res) {
 	res.render('home');
 });
 app.get('/about', function(req,res){
-	res.render('about', { 
+	res.render('about', {
 		fortune: fortune.getFortune(),
-		pageTestScript: '/qa/tests-about.js' 
+		pageTestScript: '/qa/tests-about.js'
 	} );
 });
 app.get('/tours/hood-river', function(req, res){
@@ -143,6 +146,7 @@ app.post('/newsletter', function(req, res){
 		};
 		return res.redirect(303, '/newsletter/archive');
 	}
+
 	new NewsletterSignup({ name: name, email: email }).save(function(err){
 		if(err) {
 			if(req.xhr) return res.json({ error: 'Database error.' });
@@ -154,11 +158,14 @@ app.post('/newsletter', function(req, res){
 			return res.redirect(303, '/newsletter/archive');
 		}
 		if(req.xhr) return res.json({ success: true });
+		//即显消息
 		req.session.flash = {
 			type: 'success',
 			intro: 'Thank you!',
 			message: 'You have now been signed up for the newsletter.',
 		};
+
+		console.log('222:--',req.session.flash);
 		return res.redirect(303, '/newsletter/archive');
 	});
 });
@@ -195,6 +202,6 @@ app.use(function(err, req, res, next){
 });
 
 app.listen(app.get('port'), function(){
-  console.log( 'Express started on http://localhost:' + 
+  console.log( 'Express started on http://localhost:' +
     app.get('port') + '; press Ctrl-C to terminate.' );
 });

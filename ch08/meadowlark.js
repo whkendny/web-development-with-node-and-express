@@ -1,13 +1,13 @@
 var express = require('express'),
 	fortune = require('./lib/fortune.js'),
-	formidable = require('formidable');
+	formidable = require('formidable');  //用于解析表单数据,尤其是文件上传
 
 var app = express();
 
 // set up handlebars view engine
 var handlebars = require('express-handlebars').create({
     defaultLayout:'main',
-    helpers: {
+    helpers: {  //实例化handlebars对象,并添加section的辅助方法:
         section: function(name, options){
             if(!this._sections) this._sections = {};
             this._sections[name] = options.fn(this);
@@ -21,7 +21,7 @@ app.set('view engine', 'handlebars');
 app.set('port', process.env.PORT || 3000);
 
 app.use(express.static(__dirname + '/public'));
-app.use(require('body-parser')());
+app.use(require('body-parser')());  //解析表单主体 body
 
 // set 'showTests' context property if the querystring contains test=1
 app.use(function(req, res, next){
@@ -101,11 +101,13 @@ app.get('/data/nursery-rhyme', function(req, res){
 app.get('/thank-you', function(req, res){
 	res.render('thank-you');
 });
+//提交普通表单
 app.get('/newsletter', function(req, res){
     // we will learn about CSRF later...for now, we just
     // provide a dummy value
     res.render('newsletter', { csrf: 'CSRF token goes here' });
 });
+//传递数据的API
 app.post('/process', function(req, res){
     if(req.xhr || req.accepts('json,html')==='json'){
         // if there were an error, we would send { error: 'error description' }
@@ -115,18 +117,22 @@ app.post('/process', function(req, res){
         res.redirect(303, '/thank-you');
     }
 });
+//渲染页面
 app.get('/contest/vacation-photo', function(req, res){
     var now = new Date();
     res.render('contest/vacation-photo', { year: now.getFullYear(), month: now.getMonth() });
 });
+
+
+//上传表单及文件
 app.post('/contest/vacation-photo/:year/:month', function(req, res){
     var form = new formidable.IncomingForm();
     form.parse(req, function(err, fields, files){
         if(err) return res.redirect(303, '/error');
         console.log('received fields:');
-        console.log(fields);
+        console.log(fields); //表单信息
         console.log('received files:');
-        console.log(files);
+        console.log(files);  //文件信息
         res.redirect(303, '/thank-you');
     });
 });
