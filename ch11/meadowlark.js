@@ -44,7 +44,7 @@ app.use(function(req, res, next){
 
 // set 'showTests' context property if the querystring contains test=1
 app.use(function(req, res, next){
-	res.locals.showTests = app.get('env') !== 'production' && 
+	res.locals.showTests = app.get('env') !== 'production' &&
 		req.query.test === '1';
 	next();
 });
@@ -89,9 +89,9 @@ app.get('/', function(req, res) {
 	res.render('home');
 });
 app.get('/about', function(req,res){
-	res.render('about', { 
+	res.render('about', {
 		fortune: fortune.getFortune(),
-		pageTestScript: '/qa/tests-about.js' 
+		pageTestScript: '/qa/tests-about.js'
 	} );
 });
 app.get('/tours/request-group-rate', function(req, res){
@@ -303,7 +303,7 @@ app.post('/cart/checkout', function(req, res){
 		name: name,
 		email: email,
 	};
-    res.render('email/cart-thank-you', 
+    res.render('email/cart-thank-you',
     	{ layout: null, cart: cart }, function(err,html){
 	        if( err ) console.log('error in email template');
 	        emailService.send(cart.billing.email,
@@ -328,6 +328,6 @@ app.use(function(err, req, res, next){
 });
 
 app.listen(app.get('port'), function(){
-  console.log( 'Express started on http://localhost:' + 
+  console.log( 'Express started on http://localhost:' +
     app.get('port') + '; press Ctrl-C to terminate.' );
 });
