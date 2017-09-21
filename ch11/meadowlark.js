@@ -291,7 +291,10 @@ app.get('/cart/thank-you', function(req, res){
 app.get('/email/cart/thank-you', function(req, res){
 	res.render('email/cart-thank-you', { cart: req.session.cart, layout: null });
 });
+
+// 购物车"感谢"页面创建路由
 app.post('/cart/checkout', function(req, res){
+	// 获取cart
 	var cart = req.session.cart;
 	if(!cart) next(new Error('Cart does not exist.'));
 	var name = req.body.name || '', email = req.body.email || '';
@@ -303,14 +306,27 @@ app.post('/cart/checkout', function(req, res){
 		name: name,
 		email: email,
 	};
+	/*
+	1. 第一次调用render调用避开了正常的渲染过程（提供一个回调函数，可以防止视图结果渲染到浏览器中）
+	2. 回调函数在参数 html 中接收到渲染好的视图， 我们只需要接受渲染好的 HTML 并发送邮件。
+  3. 指定了 layout: null以防止使用我们的布局文件， 因为它全在邮件模板中（另一种方式是为邮件单独创建一个
+模板）
+	*/
     res.render('email/cart-thank-you',
     	{ layout: null, cart: cart }, function(err,html){
-	        if( err ) console.log('error in email template');
+	        if( err ){
+						 console.log('error in email template');
+					}
+
+					// send email
+					var emailService = require('./lib/email.js')(credentials);
+
 	        emailService.send(cart.billing.email,
 	        	'Thank you for booking your trip with Meadowlark Travel!',
 	        	html);
 	    }
     );
+		// 再次调用了 res.render。 这次结果会像往常一样将 HTML 响应发给浏览器。
     res.render('cart-thank-you', { cart: cart });
 });
 

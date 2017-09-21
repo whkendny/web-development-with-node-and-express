@@ -178,7 +178,146 @@ mailTransport.sendMail({
 ####### 11.8.1 HTML邮件中的图片
 - 将图片放在云服务器上,通过将图片的链接引入;
 
+####### 11.8.2 用视图发送HTML邮件
+> 假设我们有一个购物车对象， 它包含了我们的订单信息。 这个购物车对象会存在于会话中。 订单流程中的最后一步是由 `/cart/chckout` 处理的表单， 它会发送一封确认邮件。
 
+1. 先从创建“感谢” 页面的视图开始， `views/cart-thankyou.handlebars`：
+```html
+<p>Thank you for booking your tirp with Meadowlark Travel, {{cart.billing.name}}!</p>
+<p>Your reservation number is {{cart.number}}, and an email has been
+sent to {{cart.billing.email}} for your records.</p>
+```
+2. 创建一个邮件模板。 下载 HTML Email Boilerplate， 把它放到 `views/email/cart-thank-you.handlebars` 中。 编辑这个文件， 修改主体部分:
+```html
+<body>
+<!-- Wrapper/Container Table: Use a wrapper table to control the width and the background color consistently of your email. Use this approach instead of setting attributes on the body tag. -->
+<table cellpadding="0" cellspacing="0" border="0" id="backgroundTable">
+    <tr>
+        <td valign="top">
+            <table cellpadding="0" cellspacing="0" border="0" align="center">
+                <tr>
+                    <td width="200" valign="top"><img class="image_fix" src="http://meadowlarktravel.com/email/logo.png" alt="Meadowlark Travel" title="Meadowlark Travel" width="180" height="220" /></td>
+                </tr>
+                <tr>
+                    <td width="200" valign="top"><p>Thank you for booking your trip with Meadowlark Travel, {{cart.billing.name}}.</p><p>Your reservation number is {{cart.number}}.</p></td>
+                </tr>
+                <tr>
+                    <td width="200" valign="top">Problems with your reservation?  Contact Meadowlark Travel at <span class="mobile_link">555-555-0123</span>.</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+<!-- End of wrapper table -->
+</body>
+```
 
+3. 为购物车“感谢”页面创建路由：
+```javascript
+// 购物车"感谢"页面创建路由
+app.post('/cart/checkout', function(req, res){
+	// 获取cart
+	var cart = req.session.cart;
+	if(!cart) next(new Error('Cart does not exist.'));
+	var name = req.body.name || '', email = req.body.email || '';
+	// input validation
+	if(!email.match(VALID_EMAIL_REGEX)) return res.next(new Error('Invalid email address.'));
+	// assign a random cart ID; normally we would use a database ID here
+	cart.number = Math.random().toString().replace(/^0\.0*/, '');
+	cart.billing = {
+		name: name,
+		email: email,
+	};
+	/*
+	1. 第一次调用render调用避开了正常的渲染过程（提供一个回调函数，可以防止视图结果渲染到浏览器中）
+	2. 回调函数在参数 html 中接收到渲染好的视图， 我们只需要接受渲染好的 HTML 并发送邮件。
+  3. 指定了 layout: null以防止使用我们的布局文件， 因为它全在邮件模板中（另一种方式是为邮件单独创建一个
+模板）
+	*/
+    res.render('email/cart-thank-you',
+    	{ layout: null, cart: cart }, function(err,html){
+	        if( err ){
+						 console.log('error in email template');
+					}
+					// send email
+	        emailService.send(cart.billing.email,
+	        	'Thank you for booking your trip with Meadowlark Travel!',
+	        	html);
+	    }
+    );
+		// 再次调用了 res.render。 这次结果会像往常一样将 HTML 响应发给浏览器。
+    res.render('cart-thank-you', { cart: cart });
+});
+```
+
+###### 11.8.3 封装邮件功能
+- 创建模块 lib/email.js
+```javascript
+var nodemailer = require('nodemailer');
+
+module.exports = function(credentials){
+	//创建一个nodemailer实例
+	var mailTransport = nodemailer.createTransport('SMTP',{
+		service: 'Gmail',
+		auth: {
+			user: credentials.gmail.user,
+			pass: credentials.gmail.password,
+		}
+	});
+
+	var from = '"Meadowlark Travel" <info@meadowlarktravel.com>';
+	var errorRecipient = 'youremail@gmail.com';
+
+	return {
+		send: function(to, subj, body){
+		    mailTransport.sendMail({
+		        from: from,
+		        to: to,
+		        subject: subj,
+		        html: body,
+		        generateTextFromHtml: true
+		    }, function(err){
+		        if(err) console.error('Unable to send email: ' + err);
+		    });
+		},
+
+		emailError: function(message, filename, exception){
+			var body = '<h1>Meadowlark Travel Site Error</h1>' +
+				'message:<br><pre>' + message + '</pre><br>';
+			if(exception) body += 'exception:<br><pre>' + exception + '</pre><br>';
+			if(filename) body += 'filename:<br><pre>' + filename + '</pre><br>';
+		    mailTransport.sendMail({
+		        from: from,
+		        to: errorRecipient,
+		        subject: 'Meadowlark Travel Site Error',
+		        html: body,
+		        generateTextFromHtml: true
+		    }, function(err){
+		        if(err) console.error('Unable to send email: ' + err);
+		    });
+		},
+	};
+};
+
+```
+- 现在要发送邮件， 我们只需要
+```javascript
+var emailService = require('./lib/email.js')(credentials);
+emailService.send('joecustomer@gmail.com', 'Hood River tours on sale today!',
+'Get \'em while they\'re hot!');
+```
 
 ##### 11.9 将邮件作为网站监测工具
+```javascript
+if(err){
+  email.sendError('the widget broke down!', __filename);
+  // ……给用户显示错误消息
+} /
+/ 或者
+try {
+  // 在这里做些不确定的事情……
+} catch(ex) {
+  email.sendError('the widget broke down!', __filename, ex);
+  // ……给用户显示错误消息
+}
+```
