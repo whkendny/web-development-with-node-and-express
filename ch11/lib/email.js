@@ -1,21 +1,18 @@
-/*
-此文件是进行邮件相关逻辑处理：
-*/
-
 var nodemailer = require('nodemailer');
 
 module.exports = function(credentials){
-	//创建一个nodemailer实例
 	var mailTransport = nodemailer.createTransport('SMTP',{
-		service: 'Gmail',
+		service: '163',
+		host: 'smtp.163.com',
+		post: '25',
 		auth: {
 			user: credentials.gmail.user,
 			pass: credentials.gmail.password,
 		}
 	});
 
-	var from = '"Meadowlark Travel" <info@meadowlarktravel.com>';
-	var errorRecipient = 'youremail@gmail.com';
+	var from = '"wh_kendny" <wh_kendny@163.com>';
+	var errorRecipient = 'wh_kendny@163.com';
 
 	return {
 		send: function(to, subj, body){
