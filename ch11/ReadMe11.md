@@ -149,7 +149,7 @@ for(var i=0; i<largeRecipientList.length/recipientLimit; i++){
 - 一个负责任的邮件营销必须提供一种退订营销邮件的办法，并且这不是个轻而易举的任务。还要乘以你维护的每个订阅列表（比如，你可能有一个周简讯和一个特殊的公告营销）。这是一个最好不要白费力气做重复工作的领域。
 - 像 MailChimp（http://mailchimp.com/）和 Campaign Monitor（http://www.campaignmonitor.com/）之类的服务提供了你需要的一切，包括监测邮件营销成功情况的优秀工具。你完全负担得起，我强烈推荐使用它们做营销邮件、简讯等。
 
-##### 11.8 HTML 邮件中的图片
+##### 11.8 发送HTML 邮件
 Nodemailer 允许你在同一封邮件里发送 HTML 和普通文本两种版本，让邮件客户端选择显示哪个版本（一般是 HTML）：
 ```javascript
 mailTransport.sendMail({
@@ -174,6 +174,11 @@ mailTransport.sendMail({
   if(err) console.error( 'Unable to send email: ' + error );
 });
 ```
+
+####### 11.8.1 HTML邮件中的图片
+- 将图片放在云服务器上,通过将图片的链接引入;
+
+
 
 
 ##### 11.9 将邮件作为网站监测工具
