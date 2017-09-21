@@ -1,7 +1,11 @@
+/*
+此文件是进行邮件相关逻辑处理：
+*/
+
 var nodemailer = require('nodemailer');
 
 module.exports = function(credentials){
-
+	//创建一个nodemailer实例
 	var mailTransport = nodemailer.createTransport('SMTP',{
 		service: 'Gmail',
 		auth: {
