@@ -25,6 +25,7 @@ app.set('view engine', 'handlebars');
 
 app.set('port', process.env.PORT || 3000);
 
+
 // use domains for better error handling
 app.use(function(req, res, next){
     // create a domain for this request
@@ -69,6 +70,16 @@ app.use(function(req, res, next){
     // execute the rest of the request chain in the domain
     domain.run(next);
 });
+
+app.use(function(req,res,next){
+		var cluster = require('cluster');
+		if(cluster.isWorker) {
+			console.log('Worker %d received request',	cluster.worker.id);
+		}
+		next();
+});
+
+
 
 // logging
 switch(app.get('env')){
@@ -391,6 +402,7 @@ app.use(function(err, req, res, next){
 	res.render('500');
 });
 
+
 var server;
 
 function startServer() {
@@ -401,6 +413,7 @@ function startServer() {
     });
 }
 
+// 通过 require.main === module来检测到一个模块是否为应用程序的主模块
 if(require.main === module){
     // application run directly; start app server
     startServer();

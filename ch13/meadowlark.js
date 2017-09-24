@@ -31,30 +31,37 @@ app.set('port', process.env.PORT || 3000);
 // use domains for better error handling
 app.use(function(req, res, next){
     // create a domain for this request
+		// 为这个请求创建一个域
     var domain = require('domain').create();
     // handle errors on this domain
+		// 处理这个域中的错误
     domain.on('error', function(err){
         console.error('DOMAIN ERROR CAUGHT\n', err.stack);
         try {
             // failsafe shutdown in 5 seconds
+						// 在 5 秒内进行故障保护关机
             setTimeout(function(){
                 console.error('Failsafe shutdown.');
                 process.exit(1);
             }, 5000);
 
             // disconnect from the cluster
+						// 从集群中断开
             var worker = require('cluster').worker;
             if(worker) worker.disconnect();
 
             // stop taking new requests
+						// 停止接收新请求
             server.close();
 
             try {
                 // attempt to use Express error route
+								// 尝试使用 Express 错误路由
                 next(err);
             } catch(error){
                 // if Express error route failed, try
                 // plain Node response
+								// 如果 Express 错误路由失效， 尝试返回普通文本响应
                 console.error('Express error mechanism failed.\n', error.stack);
                 res.statusCode = 500;
                 res.setHeader('content-type', 'text/plain');
@@ -66,10 +73,12 @@ app.use(function(req, res, next){
     });
 
     // add the request and response objects to the domain
+		// 向域中添加请求和响应对象
     domain.add(req);
     domain.add(res);
 
     // execute the rest of the request chain in the domain
+		// 执行该域中剩余的请求链
     domain.run(next);
 });
 
@@ -85,6 +94,7 @@ switch(app.get('env')){
         break;
 }
 
+//通过 session-mongoose 包提供 MongoDB 会话存储
 var MongoSessionStore = require('session-mongoose')(require('connect'));
 var sessionStore = new MongoSessionStore({ url: credentials.mongo[app.get('env')].connectionString });
 
@@ -93,16 +103,16 @@ app.use(require('express-session')({
     resave: false,
     saveUninitialized: false,
     secret: credentials.cookieSecret,
-	store: sessionStore,
+	  store: sessionStore,
 }));
 app.use(express.static(__dirname + '/public'));
 app.use(require('body-parser')());
 
-// database configuration
+// database configuration (创建数据库的链接)
 var mongoose = require('mongoose');
 var options = {
     server: {
-       socketOptions: { keepAlive: 1 } 
+       socketOptions: { keepAlive: 1 }
     }
 };
 switch(app.get('env')){
@@ -116,7 +126,7 @@ switch(app.get('env')){
         throw new Error('Unknown execution environment: ' + app.get('env'));
 }
 
-// initialize vacations
+// initialize vacations （添加初始数据）
 Vacation.find(function(err, vacations){
     if(vacations.length) return;
 
@@ -125,7 +135,7 @@ Vacation.find(function(err, vacations){
         slug: 'hood-river-day-trip',
         category: 'Day Trip',
         sku: 'HR199',
-        description: 'Spend a day sailing on the Columbia and ' + 
+        description: 'Spend a day sailing on the Columbia and ' +
             'enjoying craft beers in Hood River!',
         priceInCents: 9995,
         tags: ['day trip', 'hood river', 'sailing', 'windsurfing', 'breweries'],
@@ -177,7 +187,7 @@ app.use(function(req, res, next){
 
 // set 'showTests' context property if the querystring contains test=1
 app.use(function(req, res, next){
-	res.locals.showTests = app.get('env') !== 'production' && 
+	res.locals.showTests = app.get('env') !== 'production' &&
 		req.query.test === '1';
 	next();
 });
@@ -222,9 +232,9 @@ app.get('/', function(req, res) {
 	res.render('home');
 });
 app.get('/about', function(req,res){
-	res.render('about', { 
+	res.render('about', {
 		fortune: fortune.getFortune(),
-		pageTestScript: '/qa/tests-about.js' 
+		pageTestScript: '/qa/tests-about.js'
 	} );
 });
 app.get('/request-group-rate', function(req, res){
@@ -301,10 +311,10 @@ app.get('/contest/vacation-photo', function(req, res){
 	res.render('contest/vacation-photo', { year: now.getFullYear(), month: now.getMonth() });
 });
 
-// make sure data directory exists
+// make sure data directory exists (确保存在目录 data)
 var dataDir = __dirname + '/data';
 var vacationPhotoDir = dataDir + '/vacation-photo';
-if(!fs.existsSync(dataDir)) fs.mkdirSync(dataDir); 
+if(!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
 if(!fs.existsSync(vacationPhotoDir)) fs.mkdirSync(vacationPhotoDir);
 
 function saveContestEntry(contestName, email, year, month, photoPath){
@@ -312,8 +322,13 @@ function saveContestEntry(contestName, email, year, month, photoPath){
 }
 
 app.post('/contest/vacation-photo/:year/:month', function(req, res){
+	  // parse a file upload
     var form = new formidable.IncomingForm();
+
+		// Parses an incoming node.js request containing form data.
+		// If cb is provided, all fields and files are collected and passed to the callback:
     form.parse(req, function(err, fields, files){
+			// 回调函数提供了所有的表单域和上传的文件
         if(err) {
             req.session.flash = {
                 type: 'danger',
@@ -323,13 +338,12 @@ app.post('/contest/vacation-photo/:year/:month', function(req, res){
             };
             return res.redirect(303, '/contest/vacation-photo');
         }
-        var photo = files.photo;
-        var dir = vacationPhotoDir + '/' + Date.now();
+        var photo = files.photo;　　//files.photo 对象包含上传文件的信息。
+        var dir = vacationPhotoDir + '/' + Date.now();  //根据时间戳创建一个唯一目录
         var path = dir + '/' + photo.name;
         fs.mkdirSync(dir);
-        fs.renameSync(photo.path, dir + '/' + photo.name);
-        saveContestEntry('vacation-photo', fields.email,
-            req.params.year, req.params.month, path);
+        fs.renameSync(photo.path, dir + '/' + photo.name);  //重命名（移动） 上传的文件为我们指定的文件名
+        saveContestEntry('vacation-photo', fields.email,  req.params.year, req.params.month, path);
         req.session.flash = {
             type: 'success',
             intro: 'Good luck!',
@@ -351,15 +365,17 @@ app.get('/vacation/:vacation', function(req, res, next){
 	});
 });
 
+//  价值转化
 function convertFromUSD(value, currency){
     switch(currency){
-    	case 'USD': return value * 1;
+    	  case 'USD': return value * 1;
         case 'GBP': return value * 0.6;
         case 'BTC': return value * 0.0023707918444761;
         default: return NaN;
     }
 }
 
+// 给产品视图创建路由
 app.get('/vacations', function(req, res){
     Vacation.find({ available: true }, function(err, vacations){
     	var currency = req.session.currency || 'USD';
@@ -377,7 +393,7 @@ app.get('/vacations', function(req, res){
             })
         };
         switch(currency){
-	    	case 'USD': context.currencyUSD = 'selected'; break;
+	    	  case 'USD': context.currencyUSD = 'selected'; break;
 	        case 'GBP': context.currencyGBP = 'selected'; break;
 	        case 'BTC': context.currencyBTC = 'selected'; break;
 	    }
@@ -436,9 +452,11 @@ app.post('/cart/add', function(req, res, next){
 		res.redirect(303, '/cart');
 	});
 });
+
 app.get('/cart', function(req, res, next){
 	var cart = req.session.cart;
-	if(!cart) next();
+	console.log('vacation:---', req.session);
+	if(!cart)  next();
 	res.render('cart', { cart: cart });
 });
 app.get('/cart/checkout', function(req, res, next){
@@ -464,7 +482,7 @@ app.post('/cart/checkout', function(req, res){
 		name: name,
 		email: email,
 	};
-    res.render('email/cart-thank-you', 
+    res.render('email/cart-thank-you',
     	{ layout: null, cart: cart }, function(err,html){
 	        if( err ) console.log('error in email template');
 	        emailService.send(cart.billing.email,
@@ -475,14 +493,15 @@ app.post('/cart/checkout', function(req, res){
     res.render('cart-thank-you', { cart: cart });
 });
 
+// 创建过季的提醒视图的路由
 app.get('/notify-me-when-in-season', function(req, res){
     res.render('notify-me-when-in-season', { sku: req.query.sku });
 });
 
 app.post('/notify-me-when-in-season', function(req, res){
     VacationInSeasonListener.update(
-        { email: req.body.email }, 
-        { $push: { skus: req.body.sku } },
+        { email: req.body.email },
+        { $push: { skus: req.body.sku } },  //$push 魔法变量表明我们要添加的一个值到数组中。
         { upsert: true },
 	    function(err){
 	        if(err) {
