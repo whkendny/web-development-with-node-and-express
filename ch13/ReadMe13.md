@@ -428,4 +428,31 @@ app.get('/vacations', function(req, res){
 外一个流行又易用的会话持久化方案是用 [Redis](http://redis.io/)。请参阅[connect-redis](https://www.npmjs.org/package/connect-redis)包
 
 
+###### 有问题
+```
+Provisional headers are shown
+
+
+RangeError: Maximum call stack size exceeded
+    at RegExp.exec (native)
+    at RegExp.test (native)
+    at clone (E:\study\nodeAndExpress\ch13\node_modules\mongoose\node_modules\mquery\lib\utils.js:26:24)
+    at Object.cloneArray (E:\study\nodeAndExpress\ch13\node_modules\mongoose\node_modules\mquery\lib\utils.js:109:14)
+    at clone (E:\study\nodeAndExpress\ch13\node_modules\mongoose\node_modules\mquery\lib\utils.js:23:20)
+    at Object.cloneObject (E:\study\nodeAndExpress\ch13\node_modules\mongoose\node_modules\mquery\lib\utils.js:77:13)
+    at clone (E:\study\nodeAndExpress\ch13\node_modules\mongoose\node_modules\mquery\lib\utils.js:55:20)
+    at Object.cloneObject (E:\study\nodeAndExpress\ch13\node_modules\mongoose\node_modules\mquery\lib\utils.js:77:13)
+    at clone (E:\study\nodeAndExpress\ch13\node_modules\mongoose\node_modules\mquery\lib\utils.js:55:20)
+    at Object.cloneArray (E:\study\nodeAndExpress\ch13\node_modules\mongoose\node_modules\mquery\lib\utils.js:109:14)
+    at clone (E:\study\nodeAndExpress\ch13\node_modules\mongoose\node_modules\mquery\lib\utils.js:23:20)
+    at Object.cloneObject (E:\study\nodeAndExpress\ch13\node_modules\mongoose\node_modules\mquery\lib\utils.js:77:13)
+    at clone (E:\study\nodeAndExpress\ch13\node_modules\mongoose\node_modules\mquery\lib\utils.js:55:20)
+    at Object.cloneObject (E:\study\nodeAndExpress\ch13\node_modules\mongoose\node_modules\mquery\lib\utils.js:77:13)
+    at clone (E:\study\nodeAndExpress\ch13\node_modules\mongoose\node_modules\mquery\lib\utils.js:55:20)
+    at Object.cloneArray (E:\study\nodeAndExpress\ch13\node_modules\mongoose\node_modules\mquery\lib\utils.js:109:14)
+_http_outgoing.js:356
+    throw new Error('Can\'t set headers after they are sent.');
+
+```
+
 mongodb://<dbuser>:<dbpassword>@ds040167.mlab.com:40167/kendny

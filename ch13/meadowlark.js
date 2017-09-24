@@ -437,6 +437,7 @@ app.get('/cart/add', function(req, res, next){
 			vacation: vacation,
 			guests: req.body.guests || 1,
 		});
+		console.log('vacation111:---', req.session);
 		res.redirect(303, '/cart');
 	});
 });
@@ -449,13 +450,16 @@ app.post('/cart/add', function(req, res, next){
 			vacation: vacation,
 			guests: req.body.guests || 1,
 		});
+
+		console.log('vacation222:---', req.session.cart);
+		// return false;
 		res.redirect(303, '/cart');
 	});
 });
 
 app.get('/cart', function(req, res, next){
 	var cart = req.session.cart;
-	console.log('vacation:---', req.session);
+	// console.log('vacation:---', req.session);
 	if(!cart)  next();
 	res.render('cart', { cart: cart });
 });
