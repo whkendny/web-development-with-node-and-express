@@ -1,10 +1,11 @@
+{{!创建度假过季的 视图}}
 <div class="formContainer">
     <form class="form-horizontal newsletterForm" role="form" action="/notify-me-when-in-season" method="POST">
 	    <input type="hidden" name="sku" value="{{sku}}">
         <div class="form-group">
             <label for="fieldEmail" class="col-sm-2 control-label">Email</label>
             <div class="col-sm-4">
-                <input type="email" class="form-control" required 
+                <input type="email" class="form-control" required
                     id="fieldEmail" name="email">
             </div>
         </div>
