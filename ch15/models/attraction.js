@@ -1,3 +1,4 @@
+// 用 Mongoose 给数据库中的景点模型创建模式
 var mongoose = require('mongoose');
 
 var attractionSchema = mongoose.Schema({
@@ -10,7 +11,7 @@ var attractionSchema = mongoose.Schema({
         email: String,
         date: Date,
     },
-    updateId: String,
+    updateId: String, //指向原始记录的新记录, 用于确认更新后更新系统中的原始记录
     approved: Boolean,
 });
 var Attraction = mongoose.model('Attraction', attractionSchema);

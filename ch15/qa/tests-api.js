@@ -25,12 +25,12 @@ suite('API tests', function(){
 			.on('error', function() {
 				assert(false, 'Did you remember to alias api.meadowlark to 127.0.0.1 in your /etc/hosts file?');
 			});
-	
+
     });
 
     test('should be able to retrieve an attraction', function(done){
         rest.post(base+'/attraction', {data:attraction}).on('success', function(data){
-            rest.get(base+'/attraction/'+data.id)
+            rest.get(base+'/attraction/'+data.id)    //把 URL 传给它， 以及一个有data 属性的对象， 用来做请求体
 				.on('success', function(data){
 					assert(data.name===attraction.name);
 					assert(data.description===attraction.description);
