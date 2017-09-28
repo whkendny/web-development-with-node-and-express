@@ -114,7 +114,7 @@ module.exports = function(grunt){
 			}
 		}
 	 }
-	});	
+	});
 
 	// register tasks
 	grunt.registerTask('default', ['cafemocha','jshint','exec', 'lint_pattern']);

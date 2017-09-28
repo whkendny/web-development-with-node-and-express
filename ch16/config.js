@@ -2,7 +2,7 @@ module.exports = {
 	bundles: {
 		clientJavaScript: {
 			main: {
-				file: '/js.min/meadowlark.min.9b77d847.js',
+				file: '/js.min/meadowlark.min.62a6f623.js',
 				location: 'head',
 				contents: [
 					'/js/contact.js',
