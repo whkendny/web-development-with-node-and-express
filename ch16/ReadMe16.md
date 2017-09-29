@@ -163,9 +163,95 @@ IMG_CART_FULL: '{{static '/img/shop/cart_full.png'}}';
 - `Last-Modified/ETag`
 
 ##### 16.6 修改静态资源
-
-
+- 缓存极大提升了网站的性能， 但也不是没有代价的。 特别是如果你修改了静态资源， 客户
+可能直到浏览器中缓存的版本过期后才能见到。
+- 解决方案是**指纹法**：只是在资源名上加上某种版本信息。你更新资产后，资源名称会变，浏览器就知道它需要下载这个资源了。
+- 除了单个文件的指纹，另外一个流行的方案是**资源打包**。打包即把所有 CSS 捣烂到一个人类几乎不可能看懂的文件中，客户端 JavaScript也是如此。既然总会创建新文件，一般做那些文件的指纹更容易也更常见。
 ##### 16.7 打包和缩小
+- 打包： 将多个文件变成一个文件的过程；
+- 缩小： 在打包的过程中将源码中不必要的东西都去掉，eg：空格/将变量名变短等；
+> - 打包和缩小还有一个额外的好处， 即减少了需要做指纹处理的资产数量。
+
+- 安装必要模块：
+```
+npm install --save-dev grunt-contrib-uglify   //用于javascript
+npm install --save-dev grunt-contrib-cssmin   //用于css
+npm install --save-dev grunt-hashres          //用于做文件指纹
+```
+- 然后在 Gruntfile 中加载这些任务：
+```javascript
+[
+	// ...
+	'grunt-contrib-less',
+	'grunt-contrib-uglify',
+	'grunt-contrib-cssmin',
+	'grunt-hashres',
+].forEach(function(task){
+	grunt.loadNpmTasks(task);
+});
+```
+- 并设置这些任务：
+```javascript
+// configure plugins
+grunt.initConfig({
+	uglify: {
+		all: {
+			files: {
+				'public/js.min/meadowlark.min.js': ['public/js/**/*.js']
+			}
+		}
+	},
+	cssmin: {
+		combine: {
+			files: {
+				'public/css/meadowlark.css': ['public/css/**/*.css',
+				'!public/css/meadowlark*.css']
+			}
+		},
+		minify: {
+			src: 'public/css/meadowlark.css',
+			dest: 'public/css/meadowlark.min.css',
+		},
+	},
+	hashres: {
+		options: {
+			fileNameFormat: '${name}.${hash}.${ext}'
+		},
+		all: {
+			src: [
+				'public/js.min/meadowlark.min.js',
+				'public/css/meadowlark.min.css',
+			],
+			dest: [
+				'views/layouts/main.handlebars',
+			]
+		},
+	}
+ }
+});
+```
+- 数组中的第二个元素： 字符串前面那个感叹号说不要包含那些文件……这样可以防止它循环包含它自己生成的文件！
+
+> 这些任务有依赖关系：
+```
+grunt less
+grunt cssmin
+grunt uglify
+grunt hashres
+```
+
+- 设置grunt 任务命令脚本
+```JavaScript
+grunt.registerTask('default', ['cafemocha', 'jshint', 'exec']);
+grunt.registerTask('static', ['less', 'cssmin', 'uglify', 'hashres']);
+```
+- 输入 grunt static， 一切事情就都被做好了。
+
+###### 16.7.2 在开发模式中跳过打包和缩小
+- 打包和缩小文件不利于前端调试；
+- 为了开发
+
+
 
 
 ##### 16.8 关于第三方库
