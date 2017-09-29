@@ -249,11 +249,74 @@ grunt.registerTask('static', ['less', 'cssmin', 'uglify', 'hashres']);
 
 ###### 16.7.2 在开发模式中跳过打包和缩小
 - 打包和缩小文件不利于前端调试；
-- 为了开发
+- 为了在开发模式中禁用打包和缩小，可以引用connect-bundle模块；
 
+- 在用这个模块之前，我们先创建一个配置文件。我们现在定义打包， 但稍后还要用这个配置文件指定数据库配置。 一般配置文件会用 JSON 格式
+- 可以用 require 读取和解析 JSON 文件， 就好像它是个模块一样：
+```JavaScript
+var config = require('./config.json');
+```
+然而因为我厌烦了输入引号， 所以一般更愿意把配置放在 JavaScript 文件中（几乎跟 JSON文件一样， 只是少了几个引号）。 接下来创建 config.js：
 
+```JavaScript
+module.exports = {
+	bundles: {
+		clientJavaScript: {
+			main: {
+				file: '/js.min/meadowlark.min.62a6f623.js',
+				location: 'head',
+				contents: [
+					'/js/contact.js',
+					'/js/cart.js',
+				]
+			}
+		},
+		clientCss: {
+			main: {
+				file: '/css/meadowlark.min.2a8883cf.css',
+				contents: [
+					'/css/main.css',
+					'/css/cart.css',
+				]
+			}
+		},
+	},
+}
 
+```
+- 定义了JavaScript和CSS的打包。打包可以有多个（比如一个用于桌面端， 一个用于移动端），但我们的例子只有一个，称为 main。
+- 注意，在 JavaScript 打包中，我们可以指定位置。出于性能和依赖方面的原因，你可能会把JavaScript放在不同的位置。
 
+接下来修改 views/layouts/main.handlebars：
+```JavaScript
+{{#each _bundles.css}}
+	<link rel="stylesheet" href="{{static .}}">
+{{/each}}
+
+{{#each _bundles.js.head}}
+	<script src="{{static .}}"></script>
+{{/each}}
+```
+
+- 现在如果我们想用指纹化的打包名， 必须修改 config.js，而不是 views/layhandlebars。 还要相应地修改 Gruntfile.js：
+
+```JavaScript
+hashres: {
+	options: {
+		fileNameFormat: '${name}.${hash}.${ext}'
+	},
+	all: {
+		src: [
+			'public/js/meadowlark.min.js',
+			'public/css/meadowlark.min.css',
+		],
+		dest: [
+			'config.js',
+		]
+	},
+}
+```
+- 现在运行grunt static，你会看到config.js中的打包名的指纹已经被更新了。
 ##### 16.8 关于第三方库
 
 
