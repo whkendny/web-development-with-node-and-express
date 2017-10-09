@@ -131,9 +131,159 @@ suite('API tests', function(){
 - 当你在应用程序中使用 restler 时， 可能也想监听其他事件， 比如 fail（服务器给出的响应状态码是 4xx） 或 error（连接或解析错误）。
 
 ##### 15.7 用Express提供API
+从纯粹的 Express 实现开始提供API
+```javascript
+var Attraction = require('./models/attraction.js');
 
+app.get('/api/attractions', function(req, res){
+  Attraction.find({ approved: true }, function(err, attractions){
+      if(err) return res.send(500, 'Error occurred: database error.');
+        res.json(attractions.map(function(a){
+          return {
+            name: a.name,
+            id: a._id,
+            description: a.description,
+            location: a.location,
+          }
+    }));
+  });
+});
 
+app.post('/api/attraction', function(req, res){
+  var a = new Attraction({
+    name: req.body.name,
+    description: req.body.description,
+    location: { lat: req.body.lat, lng: req.body.lng },
+    history: {
+      event: 'created',
+      email: req.body.email,
+      date: new Date(),
+    },
+    approved: false,
+  });
+  a.save(function(err, a){
+    if(err) return res.send(500, 'Error occurred: database error.');
+      res.json({ id: a._id });
+  });
+});
+
+app.get('/api/attraction/:id', function(req,res){
+  Attraction.findById(req.params.id, function(err, a){
+    if(err) return res.send(500, 'Error occurred: database error.');
+    res.json({
+      name: a.name,
+      id: a._id,
+      description: a.description,
+      location: a.location,
+    });
+  });
+});
+```
+- 注意，在返回景点时，我们不是直接返回从数据库中返回来的模型。那样会暴露内部实现
+细节。相反，我们**选出所需信息构造了一个新的对象返回**。
+- 注意在运行测试的时候需要全局安装 mocha (`npm install --global mocha`)
 ##### 15.8 使用REST插件
+- 安装插件connect-rest
+`npm install --save connect-rest`
+- 在 meadowlark.js引用
+```javascript
+var rest = require('connect-rest');
+```
+- API 不应该跟网站的常规路由冲突（确保你没有创建任何以“/api”开头的网站路由）。我
+建议把 API 路由放在网站路由后面： connect-rest 模块会检查每一个请求，向请求对象中
+添加属性，还会做额外的日志记录。因此把它放在网站路由后面更好，但要在 404 处理器
+之前：
+```javascript
+// 网站路由在这里
+// 在这里用 rest.VERB 定义 API 路由……
+// API 配置
+var apiOptions = {
+  context: '/api',
+  domain: require('domain').create(),
+};
+// 将 API 连入管道
+app.use(rest.rester(apiOptions));
+// 404 处理器在这里
+```
+- 如果你想最大化地分离网站和API，可以考虑用子域名，比如api.meadowlark.com。
+
+
+- 'connect-rest'可以自动给所有 API 调用加上前缀“/api”。这减少了手误的几率，并且可以在需要时轻松修改根 URL。
+
+```javascript
+var Attraction = require('./models/attraction.js');
+
+var rest = require('connect-rest');
+
+rest.get('/attractions', function(req, content, cb){
+    Attraction.find({ approved: true }, function(err, attractions){
+        if(err) return cb({ error: 'Internal error.' });
+        cb(null, attractions.map(function(a){
+            return {
+                name: a.name,
+                description: a.description,
+                location: a.location,
+            };
+        }));
+    });
+});
+
+rest.post('/attraction', function(req, content, cb){
+    var a = new Attraction({
+        name: req.body.name,
+        description: req.body.description,
+        location: { lat: req.body.lat, lng: req.body.lng },
+        history: {
+            event: 'created',
+            email: req.body.email,
+            date: new Date(),
+        },
+        approved: false,
+    });
+    a.save(function(err, a){
+        if(err) return cb({ error: 'Unable to add attraction.' });
+        cb(null, { id: a._id });
+    });
+});
+
+rest.get('/attraction/:id', function(req, content, cb){
+    Attraction.findById(req.params.id, function(err, a){
+        if(err) return cb({ error: 'Unable to retrieve attraction.' });
+        cb(null, {
+            name: a.name,
+            description: a.description,
+            location: a.location,
+        });
+    });
+});
+```
+- REST 函数有三个参数:
+> - 一个请求（跟平常一样）;
+> - 一个内容对象，是请求被解析的主体;
+> - 一个回调函数，可以用于异步 API 的调用。
+
+因为我们用了数据库，这是异步的，所以必须用回调将响应发给客户端（也有同步 API，你可以
+在 [connect-rest 文档](https://github.com/imrefazekas/connect-rest)。
+
+- 注意，我们在创建 API 时还指定了一个域（见第 12 章）。这样我们可以孤立 API 错误并
+采取相应的行动。当在那个域中检测到错误时， connect-rest 会自动发送一个响应码 500，
+你所要做的只是记录日志并关闭服务器。比如：
+
+```JavaScript
+// API configuration
+apiOptions.domain.on('error', function(err){
+    console.log('API domain error.\n', err.stack);
+    setTimeout(function(){
+        console.log('Server shutting down after API domain error.');
+        process.exit(1);
+    }, 5000);
+    server.close();
+    var worker = require('cluster').worker;
+    if(worker) worker.disconnect();
+});
+```
 
 
 ##### 15.9 使用子域名
+- 将`meadowlarktravel.com/api` 改称为 `api.meadowlarktravel.com`
+- 安装中间件

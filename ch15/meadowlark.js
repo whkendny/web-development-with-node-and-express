@@ -238,7 +238,6 @@ admin.get('/users', function(req, res){
 require('./routes.js')(app);
 
 // api
-
 var Attraction = require('./models/attraction.js');
 
 var rest = require('connect-rest');
