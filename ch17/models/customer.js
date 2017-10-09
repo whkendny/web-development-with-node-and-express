@@ -1,3 +1,4 @@
+// 通过mongoose来定义的模型,  客户数据和逻辑
 var mongoose = require('mongoose');
 var Order = require('./order.js');
 var customerSchema = mongoose.Schema({

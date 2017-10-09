@@ -96,6 +96,7 @@ suite('API tests', function(){
     var base = 'http://api.meadowlark:3000';
 
     test('should be able to add an attraction', function(done){
+      // 添加一个景点
         rest.post(base+'/attraction', {data:attraction})
 			.on('success', function(data){
 				assert.match(data.id, /\w/, 'id must be set');
@@ -131,24 +132,60 @@ suite('API tests', function(){
 - 当你在应用程序中使用 restler 时， 可能也想监听其他事件， 比如 fail（服务器给出的响应状态码是 4xx） 或 error（连接或解析错误）。
 
 ##### 15.7 用Express提供API
-从纯粹的 Express 实现开始提供API
-```javascript
+- Express十分擅长提供 API。本章后面还会介绍如何用Node模块提供额外的功能， 但现在先从纯粹的 Express 实现开始：
+
+```JavaScript
 var Attraction = require('./models/attraction.js');
 
 app.get('/api/attractions', function(req, res){
   Attraction.find({ approved: true }, function(err, attractions){
-      if(err) return res.send(500, 'Error occurred: database error.');
-        res.json(attractions.map(function(a){
-          return {
-            name: a.name,
-            id: a._id,
-            description: a.description,
-            location: a.location,
-          }
+    if(err) return res.send(500, 'Error occurred: database error.');
+    res.json(attractions.map(function(a){
+      return {
+        name: a.name,
+        id: a._id,
+        description: a.description,
+        location: a.location,
+      }
     }));
   });
 });
 
+app.post('/api/attraction', function(req, res){
+    var a = new Attraction({
+        name: req.body.name,
+        description: req.body.description,
+        location: { lat: req.body.lat, lng: req.body.lng },
+        history: {
+            event: 'created',
+            email: req.body.email,
+            date: new Date(),
+        },
+        approved: false,
+});
+a.save(function(err, a){
+    if(err) return res.send(500, 'Error occurred: database error.');
+      res.json({ id: a._id });
+    });
+});
+
+app.get('/api/attraction/:id', function(req,res){
+  Attraction.findById(req.params.id, function(err, a){
+  if(err) return res.send(500, 'Error occurred: database error.');
+    res.json({
+      name: a.name,
+      id: a._id,
+      description: a.description,
+      location: a.location,
+    });
+  });
+});
+
+```
+- 注意，在返回景点时，我们不是直接返回从数据库中返回来的模型。那样会暴露内部实现细节。相反，我们选出所需信息构造了一个新的对象返回
+- 如果现在运行测试（用 Grunt 或 mocha -u tdd -R spec qa/tests-api.js），应该能看到测试通过了(需要全局安装mocha).
+
+```javascript
 app.post('/api/attraction', function(req, res){
   var a = new Attraction({
     name: req.body.name,
@@ -183,32 +220,26 @@ app.get('/api/attraction/:id', function(req,res){
 细节。相反，我们**选出所需信息构造了一个新的对象返回**。
 - 注意在运行测试的时候需要全局安装 mocha (`npm install --global mocha`)
 ##### 15.8 使用REST插件
-- 安装插件connect-rest
-`npm install --save connect-rest`
-- 在 meadowlark.js引用
-```javascript
-var rest = require('connect-rest');
-```
-- API 不应该跟网站的常规路由冲突（确保你没有创建任何以“/api”开头的网站路由）。我
-建议把 API 路由放在网站路由后面： connect-rest 模块会检查每一个请求，向请求对象中
-添加属性，还会做额外的日志记录。因此把它放在网站路由后面更好，但要在 404 处理器
-之前：
+- 只用 Express 写 API 很容易。 然而用 REST 插件有些优势。 接下来我们用健壮
+的 connect-rest 让 API 可以面向未来。 先装上它：
+`npm install --save connect-rest`;
+- 然后在 meadowlark.js 中引入它：`var rest = require('connect-rest');`
+- 建议把API路由放在网站路由后面：connect-rest模块会检查每一个请求，向请求对象中添加属性，还会做额外的日志记录。因此把它放在网站路由后面更好，但要在404 处理器之前。
+
 ```javascript
 // 网站路由在这里
 // 在这里用 rest.VERB 定义 API 路由……
 // API 配置
 var apiOptions = {
-  context: '/api',
-  domain: require('domain').create(),
+context: '/api',
+domain: require('domain').create(),
 };
 // 将 API 连入管道
 app.use(rest.rester(apiOptions));
 // 404 处理器在这里
 ```
-- 如果你想最大化地分离网站和API，可以考虑用子域名，比如api.meadowlark.com。
-
-
-- 'connect-rest'可以自动给所有 API 调用加上前缀“/api”。这减少了手误的几率，并且可以在需要时轻松修改根 URL。
+- connect-rest 已经提高了一点效率： 我们可以自动给所有 API 调用加上前缀“/api”。 这减少了手误的几率， 并且可以在需要时轻松修改根 URL。
+现在看一下如何添加 API 方法:
 
 ```javascript
 var Attraction = require('./models/attraction.js');
@@ -257,20 +288,14 @@ rest.get('/attraction/:id', function(req, content, cb){
     });
 });
 ```
-- REST 函数有三个参数:
-> - 一个请求（跟平常一样）;
-> - 一个内容对象，是请求被解析的主体;
-> - 一个回调函数，可以用于异步 API 的调用。
+- REST 函数不是只有常见的请求 / 响应两个参数， 而是有三个：
+> - 一个请求（跟平常一样） ；
+> - 一个内容对象， 是请求被解析的主体；
+> - 一个回调函数， 可以用于异步 API 的调用。
+>> 因为我们用了数据库，这是异步的，所以必须用回调将响应发给客户端（也有同步 API，你可以在 connect-rest 文档中看到： https://github.com/imrefazekas/connect-rest）。
 
-因为我们用了数据库，这是异步的，所以必须用回调将响应发给客户端（也有同步 API，你可以
-在 [connect-rest 文档](https://github.com/imrefazekas/connect-rest)。
-
-- 注意，我们在创建 API 时还指定了一个域（见第 12 章）。这样我们可以孤立 API 错误并
-采取相应的行动。当在那个域中检测到错误时， connect-rest 会自动发送一个响应码 500，
-你所要做的只是记录日志并关闭服务器。比如：
-
-```JavaScript
-// API configuration
+- 注意，我们在创建 API 时还指定了一个域（见第 12 章）。这样我们可以孤立 API错误并采取相应的行动。 当在那个域中检测到错误时， connect-rest 会自动发送一个响应码 500，你所要做的只是记录日志并关闭服务器。 比如:
+```javascript
 apiOptions.domain.on('error', function(err){
     console.log('API domain error.\n', err.stack);
     setTimeout(function(){
@@ -282,8 +307,19 @@ apiOptions.domain.on('error', function(err){
     if(worker) worker.disconnect();
 });
 ```
-
-
 ##### 15.9 使用子域名
-- 将`meadowlarktravel.com/api` 改称为 `api.meadowlarktravel.com`
-- 安装中间件
+- 因为 API 实质上是不同于网站的， 所以很多人都会选择用子域将API跟网站其余部分分开。这十分容易，我们重构这个例子， 将 meadowlarktravel.com/api 改 成 用 api.meadowlarktravel.com。
+- 先确保vhost中间件已经装好了（`npm install --save vhost`）
+-  在开发环境中， 你可能没有自己的域名服务器（DNS），所以我们需要用一种手段让Express相信你连接了一个子域。 为此需要向 hosts 文件中添加一条记录。
+`127.0.0.1 api.localhost`
+
+- 现在我们直接连入新的 vhost 创建子域：
+`app.use(vhost('api.*', rest.rester(apiOptions));`
+- 还需要修改上下文：
+```javascript
+var apiOptions = {
+  context: '/',
+  domain: require('domain').create(),
+};
+```
+- 现在所有通过 rest.VERB 定义的 API 路由都可以在 api 子域上调用了。

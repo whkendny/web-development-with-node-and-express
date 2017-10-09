@@ -116,7 +116,7 @@ app.use(express.static(__dirname + '/public'));
 var mongoose = require('mongoose');
 var options = {
     server: {
-       socketOptions: { keepAlive: 1 } 
+       socketOptions: { keepAlive: 1 }
     }
 };
 switch(app.get('env')){
@@ -139,7 +139,7 @@ Vacation.find(function(err, vacations){
         slug: 'hood-river-day-trip',
         category: 'Day Trip',
         sku: 'HR199',
-        description: 'Spend a day sailing on the Columbia and ' + 
+        description: 'Spend a day sailing on the Columbia and ' +
             'enjoying craft beers in Hood River!',
         priceInCents: 9995,
         tags: ['day trip', 'hood river', 'sailing', 'windsurfing', 'breweries'],
@@ -191,7 +191,7 @@ app.use(function(req, res, next){
 
 // set 'showTests' context property if the querystring contains test=1
 app.use(function(req, res, next){
-	res.locals.showTests = app.get('env') !== 'production' && 
+	res.locals.showTests = app.get('env') !== 'production' &&
 		req.query.test === '1';
 	next();
 });
@@ -300,13 +300,13 @@ rest.post('/attraction', function(req, content, cb){
     a.save(function(err, a){
         if(err) return cb({ error: 'Unable to add attraction.' });
         cb(null, { id: a._id });
-    }); 
+    });
 });
 
 rest.get('/attraction/:id', function(req, content, cb){
     Attraction.findById(req.params.id, function(err, a){
         if(err) return cb({ error: 'Unable to retrieve attraction.' });
-        cb(null, { 
+        cb(null, {
             name: a.name,
             description: a.description,
             location: a.location,
@@ -392,7 +392,7 @@ app.get('/sales', employeeOnly, function(req, res){
 var autoViews = {};
 
 app.use(function(req,res,next){
-    var path = req.path.toLowerCase();  
+    var path = req.path.toLowerCase();
     // check cache; if it's there, render the view
     if(autoViews[path]) return res.render(autoViews[path]);
     // if it's not in the cache, see if there's

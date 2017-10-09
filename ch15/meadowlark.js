@@ -290,6 +290,7 @@ var apiOptions = {
     domain: require('domain').create(),
 };
 
+// 创建 API 时还指定了一个域, 孤立 API错误并采取相应的行动。
 apiOptions.domain.on('error', function(err){
     console.log('API domain error.\n', err.stack);
     setTimeout(function(){
@@ -301,7 +302,7 @@ apiOptions.domain.on('error', function(err){
     if(worker) worker.disconnect();
 });
 
-// link API into pipeline
+// link API into pipeline   将 API 连入管道
 app.use(vhost('api.*', rest.rester(apiOptions)));
 
 // add support for auto views
