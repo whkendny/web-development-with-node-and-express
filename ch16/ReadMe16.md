@@ -318,7 +318,6 @@ hashres: {
 ```
 - 现在运行grunt static，你会看到config.js中的打包名的指纹已经被更新了。
 ##### 16.8 关于第三方库
-<<<<<<< HEAD
 - 如果用到非常多（超过五个）的第三方库，可以将其一起包，像jquery这种常用的第三方库很可能已经在浏览器第三方已经缓存起来了。
 
 ##### 16.9 QA
@@ -330,21 +329,6 @@ npm install --save-dev grunt-lint-pattern
 - 然后将 grunt-lint-patter 添加到 Gruntfile.js 要加载的模块列表中， 然后添加下面的配置：
 
 ```JavaScript
-=======
-- 如果你只用一两个第三方库，可能没必要把它们和你的脚本一起打包。不过如果你有五个或者更
-多库，可能会见到打包这些库后性能上的提升。
-
-##### 16.9 QA
-- `grunt-lint-pattern`:  在源码文件中搜索特定的模式，发现后就生成一个错误。先安装这个包：
-
-```javascript
-npm install --save-dev grunt-lint-pattern
-```
-
-- 将 grunt-lint-patter 添加到 Gruntfile.js 要加载的模块列表中，然后添加下面的配置：
-
-```javascript
->>>>>>> a2259aa4bb87af984f644acfc62830046120310b
 lint_pattern: {
 	view_statics: {
 		options: {
@@ -383,12 +367,9 @@ css_statics: {
 	}
 }
 ```
-<<<<<<< HEAD
 
 并将 lint_pattern 添加到默认规则中：
 ```JavaScript
 grunt.registerTask('default', ['cafemocha', 'jshint', 'exec', 'lint_pattern']);
 ```
 - 现在运行 grunt 时（我们应该定期这样做）， 会抓到所有未映射的静态实例
-=======
->>>>>>> a2259aa4bb87af984f644acfc62830046120310b
