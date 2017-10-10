@@ -343,23 +343,31 @@ var auth = require('./lib/auth.js')(app, {
 	failureRedirect: '/unauthorized',
 });
 // auth.init() links in Passport middleware:
+// auth.init() 链入了 Passport 中间件：
 auth.init();
 
 // now we can specify our auth routes:
+// 现在可以指定我们的 auth 路由了：
 auth.registerRoutes();
 
+// 只能顾客访问
 // authorization helpers
 function customerOnly(req, res, next){
 	if(req.user && req.user.role==='customer') return next();
 	// we want customer-only pages to know they need to logon
 	res.redirect(303, '/unauthorized');
 }
+// 只能员工访问
 function employeeOnly(req, res, next){
 	if(req.user && req.user.role==='employee') return next();
 	// we want employee-only authorization failures to be "hidden", to
 	// prevent potential hackers from even knowhing that such a page exists
+	// 不是执行路由中的 next 处理器，它会跳过这个路由。如果接下来没有
+// 处理 /account 的路由，那最终就是到 404 处理器，和我们期望的结果一致。
 	next('route');
 }
+
+// 路由角色控制
 function allow(roles) {
 	return function(req, res, next) {
 		if(req.user && roles.split(',').indexOf(req.user.role)!==-1) return next();
@@ -376,6 +384,7 @@ app.get('/unauthorized', function(req, res) {
 app.get('/account', allow('customer,employee'), function(req, res){
 	res.render('account', { username: req.user.name });
 });
+
 app.get('/account/order-history', customerOnly, function(req, res){
 	res.render('account/order-history');
 });

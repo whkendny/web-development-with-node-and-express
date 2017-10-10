@@ -1,3 +1,4 @@
+// 创建用户模式
 var mongoose = require('mongoose');
 
 var userSchema = mongoose.Schema({
