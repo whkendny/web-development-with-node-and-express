@@ -2,7 +2,7 @@ module.exports = {
     cookieSecret: 'we12safewrgdsfAFsdf12EE',
     gmail: {
       user: 'wh_kendny@163.com',
-      password: 'xxxian527',
+      password: '',
     },
     mongo: {
       development: {

@@ -1,12 +1,15 @@
+// 与Twitter通信
 var https = require('https'),
 	querystring = require('querystring');
 
 module.exports = function(twitterOptions){
 
-	// this variable will be invisible outside of this module
+	// this variable will be invisible outside of this module (这个变量在模块外是不可见的)
+	// 缓存我们的访问令牌
 	var accessToken;
 
-	// this function will be invisible outside of this module
+	// this function will be invisible outside of this module (这个函数在模块外是不可见的)
+	// 获取访问令牌
 	function getAccessToken(cb){
 		if(accessToken) return cb(accessToken);
 
@@ -36,7 +39,7 @@ module.exports = function(twitterOptions){
 					console.log('Twitter auth failed.');
 					return;
 				}
-				accessToken = auth.access_token;
+				accessToken = auth.access_token;  //缓存令牌
 				cb(accessToken);
 			});
 		}).end();
@@ -49,7 +52,7 @@ module.exports = function(twitterOptions){
 					hostname: 'api.twitter.com',
 					port: 443,
 					method: 'GET',
-					path: '/1.1/search/tweets.json?q=' + 
+					path: '/1.1/search/tweets.json?q=' +
 						encodeURIComponent(query) +
 						'&count=' + (count || 10),
 					headers: {
@@ -68,6 +71,7 @@ module.exports = function(twitterOptions){
 			});
 		},
 
+   // 渲染推文
 		embed: function(statusId, options, cb){
 			if(typeof options==='function') {
 				cb = options;

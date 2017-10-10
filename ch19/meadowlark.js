@@ -5,7 +5,7 @@ var http = require('http'),
 	formidable = require('formidable'),
 	fs = require('fs'),
 	vhost = require('vhost'),
-	Q = require('q'),
+	Q = require('q'),  // Q promises 库 https://www.npmjs.com/package/q
 	Dealer = require('./models/dealer.js'),
 	Vacation = require('./models/vacation.js'),
 	VacationInSeasonListener = require('./models/vacationInSeasonListener.js');
@@ -125,7 +125,7 @@ app.use(express.static(__dirname + '/public'));
 var mongoose = require('mongoose');
 var options = {
     server: {
-       socketOptions: { keepAlive: 1 } 
+       socketOptions: { keepAlive: 1 }
     }
 };
 switch(app.get('env')){
@@ -148,7 +148,7 @@ Vacation.find(function(err, vacations){
         slug: 'hood-river-day-trip',
         category: 'Day Trip',
         sku: 'HR199',
-        description: 'Spend a day sailing on the Columbia and ' + 
+        description: 'Spend a day sailing on the Columbia and ' +
             'enjoying craft beers in Hood River!',
         priceInCents: 9995,
         tags: ['day trip', 'hood river', 'sailing', 'windsurfing', 'breweries'],
@@ -192,7 +192,7 @@ Vacation.find(function(err, vacations){
 // initialize dealers
 Dealer.find({}, function(err, dealers){
     if(dealers.length) return;
-	
+
 	new Dealer({
 		name: 'Oregon Novelties',
 		address1: '912 NW Davis St',
@@ -249,19 +249,19 @@ Dealer.find({}, function(err, dealers){
 	}).save();
 });
 
-// dealer geocoding
+// dealer geocoding 创建一个辅助函数，对给定 Dealer 模型做地理编码，并将结果保存到数据库中。
 function geocodeDealer(dealer){
     var addr = dealer.getAddress(' ');
     if(addr===dealer.geocodedAddress) return;   // already geocoded
 
     if(dealerCache.geocodeCount >= dealerCache.geocodeLimit){
-        // has 24 hours passed since we last started geocoding?
+        // has 24 hours passed since we last started geocoding? (自上次做完地理编码已经过去 24 小时了吗？)
         if(Date.now() > dealerCache.geocodeCount + 24 * 60 * 60 * 1000){
             dealerCache.geocodeBegin = Date.now();
             dealerCache.geocodeCount = 0;
         } else {
-            // we can't geocode this now: we've
-            // reached our usage limit
+            // we can't geocode this now: we've ( 现在还不能做地理编码处理)
+            // reached our usage limit(我们已经达到使用限制了)
             return;
         }
     }
@@ -276,6 +276,7 @@ function geocodeDealer(dealer){
 }
 
 // optimize performance of dealer display
+// 在服务器端直接给出 JavaScript，而不是（或额外）给出代理商的 JSON
 function dealersToGoogleMaps(dealers){
     var js = 'function addMarkers(map){\n' +
         'var markers = [];\n' +
@@ -298,14 +299,15 @@ function dealersToGoogleMaps(dealers){
 // dealer cache
 var dealerCache = {
     lastRefreshed: 0,
-    refreshInterval: 60 * 60 * 1000,
+    refreshInterval: 60 * 60 * 1000,  //定时刷新的时间间隔
     jsonUrl: '/dealers.json',
     geocodeLimit: 2000,
     geocodeCount: 0,
     geocodeBegin: 0,
 };
-dealerCache.jsonFile = __dirname +
-    '/public' + dealerCache.jsonUrl;
+dealerCache.jsonFile = __dirname + '/public' + dealerCache.jsonUrl;
+
+		//函数刷新代理商缓存
 dealerCache.refresh = function(cb){
 
     if(Date.now() > dealerCache.lastRefreshed + dealerCache.refreshInterval){
@@ -315,19 +317,23 @@ dealerCache.refresh = function(cb){
                  err);
 
             // geocodeDealer will do nothing if coordinates are up-to-date
+						// 如果坐标是最新的，geocodeDealer 什么也不做
             dealers.forEach(geocodeDealer);
 
             // we now write all the dealers out to our cached JSON file
+						// 现在将所有代理商写到缓存的 JSON 文件中
             fs.writeFileSync(dealerCache.jsonFile, JSON.stringify(dealers));
 
-			fs.writeFileSync(__dirname + '/public/js/dealers-googleMapMarkers.js', dealersToGoogleMaps(dealers));
+						//dealersToGoogleMaps()中的那段 JavaScript 写到一个文件中（比如 /dealers-googleMapMarkers.js）
+						fs.writeFileSync(__dirname + '/public/js/dealers-googleMapMarkers.js', dealersToGoogleMaps(dealers));
 
             // all done -- invoke callback
             cb();
         });
     }
-
 };
+
+// 定时刷新
 function refreshDealerCacheForever(){
     dealerCache.refresh(function(){
         // call self after refresh interval
@@ -336,6 +342,7 @@ function refreshDealerCacheForever(){
     });
 }
 // create empty cache if it doesn't exist to prevent 404 errors
+// 如果缓存还不存在，则创建它，以防出现 404 错误
 if(!fs.existsSync(dealerCache.jsonFile)) fs.writeFileSync(JSON.stringify([]));
 // start refreshing cache
 refreshDealerCacheForever();
@@ -351,14 +358,14 @@ app.use(function(req, res, next){
 
 // set 'showTests' context property if the querystring contains test=1
 app.use(function(req, res, next){
-	res.locals.showTests = app.get('env') !== 'production' && 
+	res.locals.showTests = app.get('env') !== 'production' &&
 		req.query.test === '1';
 	next();
 });
 
-// mocked weather data
+// mocked weather data (通过api获取天气数据)
 var getWeatherData = (function(){
-    // our weather cache
+    // our weather cache (天气缓存)
     var c = {
         refreshed: 0,
         refreshing: false,
@@ -402,6 +409,7 @@ var getWeatherData = (function(){
     };
 })();
 // initialize weather cache
+// 初始化天气缓存
 getWeatherData();
 
 // middleware to add weather data to context
@@ -411,11 +419,11 @@ app.use(function(req, res, next){
  	next();
 });
 
-// twitter integration
+// twitter integration (对象存储缓存)
 var topTweets = {
 	count: 10,
 	lastRefreshed: 0,
-	refreshInterval: 15 * 60 * 1000,
+	refreshInterval: 15 * 60 * 1000,   //缓存15分钟
 	tweets: [],
 };
 function getTopTweets(cb){
@@ -434,7 +442,7 @@ function getTopTweets(cb){
     				formattedTweets.push(embed.html);
     				resolve();
     			});
-            });
+        });
 		});
 		Q.all(promises).then(function(){
 			topTweets.lastRefreshed = Date.now();
@@ -518,13 +526,13 @@ rest.post('/attraction', function(req, content, cb){
     a.save(function(err, a){
         if(err) return cb({ error: 'Unable to add attraction.' });
         cb(null, { id: a._id });
-    }); 
+    });
 });
 
 rest.get('/attraction/:id', function(req, content, cb){
     Attraction.findById(req.params.id, function(err, a){
         if(err) return cb({ error: 'Unable to retrieve attraction.' });
-        cb(null, { 
+        cb(null, {
             name: a.name,
             description: a.description,
             location: a.location,
@@ -610,7 +618,7 @@ app.get('/sales', employeeOnly, function(req, res){
 var autoViews = {};
 
 app.use(function(req,res,next){
-    var path = req.path.toLowerCase();  
+    var path = req.path.toLowerCase();
     // check cache; if it's there, render the view
     if(autoViews[path]) return res.render(autoViews[path]);
     // if it's not in the cache, see if there's

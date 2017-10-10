@@ -133,6 +133,7 @@ suite('API tests', function(){
 
 ##### 15.7 用Express提供API
 - Express十分擅长提供 API。本章后面还会介绍如何用Node模块提供额外的功能， 但现在先从纯粹的 Express 实现开始：
+
 ```JavaScript
 var Attraction = require('./models/attraction.js');
 
@@ -182,14 +183,49 @@ app.get('/api/attraction/:id', function(req,res){
 
 ```
 - 注意，在返回景点时，我们不是直接返回从数据库中返回来的模型。那样会暴露内部实现细节。相反，我们选出所需信息构造了一个新的对象返回
-- 如果现在运行测试（用 Grunt 或 mocha -u tdd -R spec qa/tests-api.js），应该能看到测试通过了.
+- 如果现在运行测试（用 Grunt 或 mocha -u tdd -R spec qa/tests-api.js），应该能看到测试通过了(需要全局安装mocha).
 
+```javascript
+app.post('/api/attraction', function(req, res){
+  var a = new Attraction({
+    name: req.body.name,
+    description: req.body.description,
+    location: { lat: req.body.lat, lng: req.body.lng },
+    history: {
+      event: 'created',
+      email: req.body.email,
+      date: new Date(),
+    },
+    approved: false,
+  });
+  a.save(function(err, a){
+    if(err) return res.send(500, 'Error occurred: database error.');
+      res.json({ id: a._id });
+  });
+});
+
+app.get('/api/attraction/:id', function(req,res){
+  Attraction.findById(req.params.id, function(err, a){
+    if(err) return res.send(500, 'Error occurred: database error.');
+    res.json({
+      name: a.name,
+      id: a._id,
+      description: a.description,
+      location: a.location,
+    });
+  });
+});
+```
+- 注意，在返回景点时，我们不是直接返回从数据库中返回来的模型。那样会暴露内部实现
+细节。相反，我们**选出所需信息构造了一个新的对象返回**。
+- 注意在运行测试的时候需要全局安装 mocha (`npm install --global mocha`)
 ##### 15.8 使用REST插件
 - 只用 Express 写 API 很容易。 然而用 REST 插件有些优势。 接下来我们用健壮
 的 connect-rest 让 API 可以面向未来。 先装上它：
 `npm install --save connect-rest`;
 - 然后在 meadowlark.js 中引入它：`var rest = require('connect-rest');`
 - 建议把API路由放在网站路由后面：connect-rest模块会检查每一个请求，向请求对象中添加属性，还会做额外的日志记录。因此把它放在网站路由后面更好，但要在404 处理器之前。
+
 ```javascript
 // 网站路由在这里
 // 在这里用 rest.VERB 定义 API 路由……
@@ -204,6 +240,7 @@ app.use(rest.rester(apiOptions));
 ```
 - connect-rest 已经提高了一点效率： 我们可以自动给所有 API 调用加上前缀“/api”。 这减少了手误的几率， 并且可以在需要时轻松修改根 URL。
 现在看一下如何添加 API 方法:
+
 ```javascript
 var Attraction = require('./models/attraction.js');
 

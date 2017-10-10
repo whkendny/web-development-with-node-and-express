@@ -1,3 +1,4 @@
+// 代理商模型
 var mongoose = require('mongoose');
 
 var dealerSchema = mongoose.Schema({
