@@ -318,6 +318,58 @@ hashres: {
 ```
 - 现在运行grunt static，你会看到config.js中的打包名的指纹已经被更新了。
 ##### 16.8 关于第三方库
-
+- 如果用到非常多（超过五个）的第三方库，可以将其一起包，像jquery这种常用的第三方库很可能已经在浏览器第三方已经缓存起来了。
 
 ##### 16.9 QA
+- 与其等着不可避免的 bug 出现， 或者希望代码审查能抓住问题，何不在我们的QA工具链中添加个组件解决问题呢？
+- 我们将会用到一个 Grunt 插件 grunt-lint-pattern， 它只是在源码文件中搜索特定的模式， 发现后就生成一个错误。
+```bashshell
+npm install --save-dev grunt-lint-pattern
+```
+- 然后将 grunt-lint-patter 添加到 Gruntfile.js 要加载的模块列表中， 然后添加下面的配置：
+
+```JavaScript
+lint_pattern: {
+	view_statics: {
+		options: {
+			rules: [
+				{
+					pattern: /<link [^>]*href=["'](?!\{\{|(https?:)?\/\/)/,
+					message: 'Un-mapped static resource found in <link>.'
+				},
+				{
+					pattern: /<script [^>]*src=["'](?!\{\{|(https?:)?\/\/)/,
+					message: 'Un-mapped static resource found in <script>.'
+				},
+				{
+					pattern: /<img [^>]*src=["'](?!\{\{|(https?:)?\/\/)/,
+					message: 'Un-mapped static resource found in <img>.'
+				},
+			]
+		},
+	files: {
+		src: [ 'views/**/*.handlebars' ]
+	 }
+},
+css_statics: {
+	options: {
+		rules: [
+			{
+				pattern: /url\(/,
+				message: 'Un-mapped static found in LESS property.'
+			},
+		]
+	},
+	files: {
+		src: [
+			'less/**/*.less'
+		]
+	}
+}
+```
+
+并将 lint_pattern 添加到默认规则中：
+```JavaScript
+grunt.registerTask('default', ['cafemocha', 'jshint', 'exec', 'lint_pattern']);
+```
+- 现在运行 grunt 时（我们应该定期这样做）， 会抓到所有未映射的静态实例
